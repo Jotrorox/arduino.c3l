@@ -1,0 +1,3 @@
+module arduino;
+
+// extern fn int some_library_function();

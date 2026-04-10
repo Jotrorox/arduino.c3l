@@ -1,0 +1,11 @@
+{
+  "provides" : "arduino",
+  "linklib-dir" : "linked-libs",
+  "targets" : {
+    "elf-avr" : {
+      "link-args" : [ "-T", "arduino.ld", "--gc-sections" ],
+      "dependencies" : [],
+      "linked-libraries" : []
+    }
+  }
+}
