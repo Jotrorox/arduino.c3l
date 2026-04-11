@@ -1,7 +1,7 @@
 module blink;
+
 import arduino::gpio;
 import arduino::time;
-
 
 fn void main() @export("start") {
     gpio::pin_mode(gpio::D13, gpio::OUTPUT);
