@@ -1,6 +1,7 @@
 {
   "provides" : "arduino",
   "linklib-dir" : "linked-libs",
+  "sources": [ "src/**" ],
   "targets" : {
     "elf-avr" : {
       "link-args" : [ "-T", "arduino.ld", "--gc-sections" ],

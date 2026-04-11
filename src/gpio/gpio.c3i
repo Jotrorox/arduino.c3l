@@ -1,0 +1,43 @@
+module arduino::gpio;
+
+// Pin mode constants
+const int OUTPUT      = 1;
+const int INPUT       = 0;
+const int INPUT_PULLUP = 2;
+
+// Level constants
+const int HIGH = 1;
+const int LOW  = 0;
+
+// Digital pin aliases
+const int D0  = 0;
+const int D1  = 1;
+const int D2  = 2;
+const int D3  = 3;
+const int D4  = 4;
+const int D5  = 5;
+const int D6  = 6;
+const int D7  = 7;
+const int D8  = 8;
+const int D9  = 9;
+const int D10 = 10;
+const int D11 = 11;
+const int D12 = 12;
+const int D13 = 13;
+
+// Analog pins — usable as digital 14–19
+const int A0 = 14;
+const int A1 = 15;
+const int A2 = 16;
+const int A3 = 17;
+const int A4 = 18;
+const int A5 = 19;
+
+macro void pin_mode(int pin, int mode)
+    => pin_mode_impl(pin, mode);
+
+macro void digital_write(int pin, int value)
+    => digital_write_impl(pin, value);
+
+macro int digital_read(int pin)
+    => digital_read_impl(pin);
