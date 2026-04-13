@@ -1,5 +1,7 @@
 module arduino::adc @private;
 
+import arduino::gpio;
+
 // ADC registers (ATmega328P data-space addresses)
 const uint ADMUX_REG  = 0x7C;   // Multiplexer selection + reference
 const uint ADCSRA_REG = 0x7A;   // Control and status A
@@ -33,12 +35,12 @@ fn void adc_init() {
     initialized = true;
 }
 
-fn ushort analog_read_impl(int pin) {
+fn ushort analog_read_impl(Pin pin) {
     adc_init();
 
     // A0-A5 are aliased to pins 14-19 in gpio.c3i;
     // they map directly to ADC channels 0-5.
-    int channel = pin - 14;
+    int channel = (int)pin - 14;
     if (channel < 0 || channel > 5) return 0;
 
     // Select channel, keep AVCC reference

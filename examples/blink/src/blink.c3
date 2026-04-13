@@ -4,11 +4,11 @@ import arduino::gpio;
 import arduino::time;
 
 fn void main() @export("start") {
-    gpio::pin_mode(gpio::D13, gpio::OUTPUT);
+    gpio::pin_mode(D13, OUTPUT);
     while (true) {
-        gpio::digital_write(gpio::D13, gpio::HIGH);
+        gpio::digital_write(D13, HIGH);
         time::delay(500);
-        gpio::digital_write(gpio::D13, gpio::LOW);
+        gpio::digital_write(D13, LOW);
         time::delay(500);
     }
 }

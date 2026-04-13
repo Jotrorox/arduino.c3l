@@ -5,25 +5,25 @@ module arduino::gpio @private;
 // PORTC=0x28 DDRC=0x27 PINC=0x26  →  A0-A5  (PC0-PC5)
 // PORTD=0x2B DDRD=0x2A PIND=0x29  →  D0-D7  (PD0-PD7)
 
-fn char get_port(int pin) {
-    if (pin <= 7)  return 0x2B;
-    if (pin <= 13) return 0x25;
+fn char get_port(Pin pin) {
+    if ((int)pin <= 7)  return 0x2B;
+    if ((int)pin <= 13) return 0x25;
     return 0x28;
 }
-fn char get_ddr(int pin) {
-    if (pin <= 7)  return 0x2A;
-    if (pin <= 13) return 0x24;
+fn char get_ddr(Pin pin) {
+    if ((int)pin <= 7)  return 0x2A;
+    if ((int)pin <= 13) return 0x24;
     return 0x27;
 }
-fn char get_pin_reg(int pin) {
-    if (pin <= 7)  return 0x29;
-    if (pin <= 13) return 0x23;
+fn char get_pin_reg(Pin pin) {
+    if ((int)pin <= 7)  return 0x29;
+    if ((int)pin <= 13) return 0x23;
     return 0x26;
 }
-fn char get_bit(int pin) {
-    if (pin <= 7)  return (char)pin;
-    if (pin <= 13) return (char)(pin - 8);
-    return (char)(pin - 14);
+fn char get_bit(Pin pin) {
+    if ((int)pin <= 7)  return (char)pin;
+    if ((int)pin <= 13) return (char)(pin - 8);
+    return (char)((int)pin - 14);
 }
 
 fn void reg_set(char addr, char bit) {
@@ -39,37 +39,37 @@ fn char reg_read(char addr) {
     return *r;
 }
 
-fn void pin_mode_impl(int pin, int mode) {
-    if (pin < 0 || pin >= 20) return;
+fn void pin_mode_impl(Pin pin, PinMode mode) {
+    if ((int)pin < 0 || (int)pin >= 20) return;
     char bit  = get_bit(pin);
     char ddr  = get_ddr(pin);
     char port = get_port(pin);
     switch (mode) {
-        case OUTPUT:
+        case PinMode.OUTPUT:
             reg_set(ddr, bit);
-        case INPUT:
+        case PinMode.INPUT:
             reg_clr(ddr, bit);
             reg_clr(port, bit);
-        case INPUT_PULLUP:
+        case PinMode.INPUT_PULLUP:
             reg_clr(ddr, bit);
             reg_set(port, bit);
     }
 }
 
-fn void digital_write_impl(int pin, int value) {
-    if (pin < 0 || pin >= 20) return;
+fn void digital_write_impl(Pin pin, PinState value) {
+    if ((int)pin < 0 || (int)pin >= 20) return;
     char bit  = get_bit(pin);
     char port = get_port(pin);
-    if (value != LOW) {
+    if (value != PinState.LOW) {
         reg_set(port, bit);
     } else {
         reg_clr(port, bit);
     }
 }
 
-fn int digital_read_impl(int pin) {
-    if (pin < 0 || pin >= 20) return LOW;
+fn PinState digital_read_impl(Pin pin) {
+    if ((int)pin < 0 || (int)pin >= 20) return PinState.LOW;
     char bit     = get_bit(pin);
     char pin_reg = get_pin_reg(pin);
-    return (reg_read(pin_reg) & (char)(1 << bit)) != 0 ? HIGH : LOW;
+    return (reg_read(pin_reg) & (char)(1 << bit)) != 0 ? PinState.HIGH : PinState.LOW;
 }

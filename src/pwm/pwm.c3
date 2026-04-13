@@ -64,24 +64,24 @@ fn void ensure_timer2() {
     timer2_active = true;
 }
 
-fn void analog_write_impl(int pin, char duty) {
+fn void analog_write_impl(PWMPin pin, char duty) {
     switch (pin) {
-        case 6:    // D6 = PD6 = OC0A  (Timer0 channel A)
+        case PWMPin.D6:    // D6 = PD6 = OC0A  (Timer0 channel A)
             ensure_timer0();
             pin_set_output(DDRD_REG, 6);
             reg_write(TCCR0A_REG, (char)(reg_read(TCCR0A_REG) | COM_A_ENABLE));
             reg_write(OCR0A_REG, duty);
-        case 5:    // D5 = PD5 = OC0B  (Timer0 channel B)
+        case PWMPin.D5:    // D5 = PD5 = OC0B  (Timer0 channel B)
             ensure_timer0();
             pin_set_output(DDRD_REG, 5);
             reg_write(TCCR0A_REG, (char)(reg_read(TCCR0A_REG) | COM_B_ENABLE));
             reg_write(OCR0B_REG, duty);
-        case 11:   // D11 = PB3 = OC2A  (Timer2 channel A)
+        case PWMPin.D11:   // D11 = PB3 = OC2A  (Timer2 channel A)
             ensure_timer2();
             pin_set_output(DDRB_REG, 3);
             reg_write(TCCR2A_REG, (char)(reg_read(TCCR2A_REG) | COM_A_ENABLE));
             reg_write(OCR2A_REG, duty);
-        case 3:    // D3 = PD3 = OC2B  (Timer2 channel B)
+        case PWMPin.D3:    // D3 = PD3 = OC2B  (Timer2 channel B)
             ensure_timer2();
             pin_set_output(DDRD_REG, 3);
             reg_write(TCCR2A_REG, (char)(reg_read(TCCR2A_REG) | COM_B_ENABLE));
