@@ -1,0 +1,20 @@
+module arduino::uart;
+
+// UART0 on ATmega328P:
+//   D0 = RX
+//   D1 = TX
+
+macro void begin(uint baud) => begin_impl(baud);
+macro void write(char c) => write_impl(c);
+
+// RAM-backed string/slice
+macro void write_buf(char[] s) => write_buf_impl(s);
+
+// Zero-terminated RAM string
+macro void write_zstr(char* s) => write_zstr_impl(s);
+
+macro void write_crlf() => write_crlf_impl();
+macro void write_line_zstr(char* s) => write_line_zstr_impl(s);
+
+macro bool can_read() => can_read_impl();
+macro char read() => read_impl();

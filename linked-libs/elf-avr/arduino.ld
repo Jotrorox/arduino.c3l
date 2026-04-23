@@ -9,13 +9,13 @@ SECTIONS {
     .text 0x0 : {
         KEEP(*(.init*))
         *(.text*)
-        *(.rodata*)
         _etext = .;
     } > FLASH
 
     .data : AT(_etext) {
         _sdata = .;
         *(.data*)
+        *(.rodata*)
         _edata = .;
     } > SRAM
 
