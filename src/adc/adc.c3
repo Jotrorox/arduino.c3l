@@ -20,11 +20,11 @@ const char AVCC_REF = 0x40;
 bool initialized = false;
 
 fn void reg_write(uint addr, char val) {
-    $$volatile_store((char*)(uptr)addr, val);
+    @volatile_store(*(char*)(uptr)addr, val);
 }
 
 fn char reg_read(uint addr) {
-    return $$volatile_load((char*)(uptr)addr);
+    return @volatile_load(*(char*)(uptr)addr);
 }
 
 fn void adc_init() {

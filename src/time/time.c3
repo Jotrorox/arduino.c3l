@@ -21,23 +21,23 @@ const char CTC_PS1  = 0x09;  // CTC + prescaler 1
 const char CTC_PS64 = 0x0B;  // CTC + prescaler 64
 const char STOP     = 0x00;  // timer stopped
 
-fn void t1_write(uint addr, char val) {
-    $$volatile_store((char*)(uptr)addr, val);
+fn void reg_write(uint addr, char val) {
+    @volatile_store(*(char*)(uptr)addr, val);
 }
 
-fn char t1_read(uint addr) {
-    return $$volatile_load((char*)(uptr)addr);
+fn char reg_read(uint addr) {
+    return @volatile_load(*(char*)(uptr)addr);
 }
 
 // Wait for one CTC compare-match cycle.
 // OCR1A must be set before calling.
 fn void t1_wait(char mode) {
-    t1_write(TCNT1H, 0);
-    t1_write(TCNT1L, 0);
-    t1_write(TIFR1, OCF1A_BIT);
-    t1_write(TCCR1B, mode);
-    while ((t1_read(TIFR1) & OCF1A_BIT) == 0) {}
-    t1_write(TCCR1B, STOP);
+    reg_write(TCNT1H, 0);
+    reg_write(TCNT1L, 0);
+    reg_write(TIFR1, OCF1A_BIT);
+    reg_write(TCCR1B, mode);
+    while ((reg_read(TIFR1) & OCF1A_BIT) == 0) {}
+    reg_write(TCCR1B, STOP);
 }
 
 // delay_us:
@@ -47,17 +47,17 @@ fn void t1_wait(char mode) {
 fn void delay_us_impl(uint us) {
     if (us == 0) return;
     uint ticks = us * 16 - 1;
-    t1_write(TCCR1A, 0x00);
-    t1_write(OCR1AH, (char)(ticks >> 8));
-    t1_write(OCR1AL, (char)(ticks & 0xFF));
+    reg_write(TCCR1A, 0x00);
+    reg_write(OCR1AH, (char)(ticks >> 8));
+    reg_write(OCR1AL, (char)(ticks & 0xFF));
     t1_wait(CTC_PS1);
 }
 
 // delay_ms: prescaler 64 → 4 µs per tick → 250 ticks per ms → OCR1A = 249
 fn void delay_ms_impl(uint ms) {
-    t1_write(TCCR1A, 0x00);
-    t1_write(OCR1AH, 0x00);
-    t1_write(OCR1AL, 249);
+    reg_write(TCCR1A, 0x00);
+    reg_write(OCR1AH, 0x00);
+    reg_write(OCR1AL, 249);
     for (uint i = 0; i < ms; i++) {
         t1_wait(CTC_PS64);
     }

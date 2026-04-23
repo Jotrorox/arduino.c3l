@@ -36,11 +36,11 @@ bool timer0_active = false;
 bool timer2_active = false;
 
 fn void reg_write(uint addr, char val) {
-    $$volatile_store((char*)(uptr)addr, val);
+    @volatile_store(*(char*)(uptr)addr, val);
 }
 
 fn char reg_read(uint addr) {
-    return $$volatile_load((char*)(uptr)addr);
+    return @volatile_load(*(char*)(uptr)addr);
 }
 
 fn void pin_set_output(uint ddr_addr, int bit) {
