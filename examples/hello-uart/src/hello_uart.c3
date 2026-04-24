@@ -8,10 +8,7 @@ fn void main() @export("start") {
     time::delay(1000);
 
     while (true) {
-        uart::write('O');
-        uart::write('K');
-        uart::write('\r');
-        uart::write('\n');
+        uart::write_line("Hello, World!");
         time::delay(1000);
     }
 }
