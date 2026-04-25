@@ -1,0 +1,10 @@
+module arduino::driver::sensor::aht20;
+
+struct Reading {
+    int temperature;  // hundredths of a degree Celsius (e.g. 2350 = 23.50 C)
+    int humidity;     // hundredths of a percent RH      (e.g. 4567 = 45.67 %)
+    int valid;        // 1 = reading is valid, 0 = error
+}
+
+macro bool init() => init_impl();
+macro Reading read() => read_impl();
