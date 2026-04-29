@@ -28,15 +28,15 @@ fn char get_bit(Pin pin) {
 
 fn void reg_set(char addr, char bit) {
     char* r = (char*)(uptr)addr;
-    *r = (char)(*r | (char)(1 << bit));
+    @volatile_store(*r, (char)(@volatile_load(*r) | (char)(1 << bit)));
 }
 fn void reg_clr(char addr, char bit) {
     char* r = (char*)(uptr)addr;
-    *r = (char)(*r & (char)~(1 << bit));
+    @volatile_store(*r, (char)(@volatile_load(*r) & (char)~(1 << bit)));
 }
 fn char reg_read(char addr) {
     char* r = (char*)(uptr)addr;
-    return *r;
+    return @volatile_load(*r);
 }
 
 fn void pin_mode_impl(Pin pin, PinMode mode) {

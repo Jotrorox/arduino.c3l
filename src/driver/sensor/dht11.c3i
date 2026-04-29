@@ -1,0 +1,12 @@
+module arduino::driver::sensor::dht11;
+
+import arduino::gpio;
+
+struct Reading {
+    int temperature;  // hundredths of a degree Celsius (e.g. 2300 = 23.00 C)
+    int humidity;     // hundredths of a percent RH      (e.g. 4500 = 45.00 %)
+    int valid;        // 1 = reading is valid, 0 = error
+    int error;        // error stage code (for diagnostics)
+}
+
+macro Reading read(Pin pin) => read_impl(pin);
