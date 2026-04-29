@@ -1,0 +1,34 @@
+module arduino::driver::output::ssd1306;
+
+// Initialise the SSD1306 over I2C.
+//   addr   – 7-bit I2C address (usually 0x3C or 0x3D).
+//   height – display height in pixels (32 or 64).
+macro bool init(char addr, char height) => init_impl(addr, height);
+
+// Clear the internal framebuffer (does not update the display).
+macro void clear() => clear_impl();
+
+// Send the framebuffer to the OLED.
+macro void display() => display_impl();
+
+// Draw or erase a single pixel.
+//   color – true = lit, false = dark.
+macro void draw_pixel(int x, int y, bool color) => draw_pixel_impl(x, y, color);
+
+// Draw a 5×7 character at (x, y).
+macro void draw_char(int x, int y, char c) => draw_char_impl(x, y, c);
+
+// Draw a char[] string at (x, y).
+macro void draw_string(int x, int y, char[] s) => draw_string_impl(x, y, s);
+
+// Draw a horizontal line.
+macro void draw_hline(int x, int y, int w) => draw_hline_impl(x, y, w);
+
+// Draw a vertical line.
+macro void draw_vline(int x, int y, int h) => draw_vline_impl(x, y, h);
+
+// Draw a rectangle outline.
+macro void draw_rect(int x, int y, int w, int h) => draw_rect_impl(x, y, w, h);
+
+// Fill a rectangle.
+macro void fill_rect(int x, int y, int w, int h) => fill_rect_impl(x, y, w, h);
