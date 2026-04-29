@@ -1,12 +1,8 @@
 module arduino::i2c;
 
-// ── Initialisation ────────────────────────────────────────────────────────────
-
 // Initialise the TWI peripheral as an I2C master at 100 kHz (16 MHz CPU).
 // Also clears the internal transmit / receive buffers.
 macro void begin() => begin_impl();
-
-// ── Transmission (master write) ───────────────────────────────────────────────
 
 // Start building a write transaction for the given 7-bit slave address.
 macro void begin_transmission(char addr) => begin_transmission_impl(addr);
@@ -22,8 +18,6 @@ macro void write_bytes(char[] data) => write_bytes_impl(data);
 // 3 if the slave NACKed a data byte.
 macro char end_transmission() => end_transmission_impl();
 
-// ── Reception (master read) ───────────────────────────────────────────────────
-
 // Request `quantity` bytes from the given 7-bit slave address.
 // The bytes are stored in an internal buffer.
 // Returns the number of bytes actually read (may be 0 on error).
@@ -34,8 +28,6 @@ macro char available() => available_impl();
 
 // Read the next byte from the receive buffer. Returns 0 if empty.
 macro char read_byte() => read_byte_impl();
-
-// ── Utility ───────────────────────────────────────────────────────────────────
 
 // Quick bus check: send START + SLA+W and immediately STOP.
 // Returns true if the slave ACKed its address.

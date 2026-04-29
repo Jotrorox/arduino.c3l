@@ -1,17 +1,9 @@
 module arduino::uart;
 
-// UART0 on ATmega328P:
-//   D0 = RX
-//   D1 = TX
-
-// ── Initialisation ────────────────────────────────────────────────────────────
-
 // Initialise USART0 at the chosen baud rate.
 // Supported: 2400 / 4800 / 9600 / 14400 / 19200 / 28800 / 38400 / 57600 / 115200
 // Any other value falls back to 9600.
 macro void begin(uint baud) => begin_impl(baud);
-
-// ── TX ────────────────────────────────────────────────────────────────────────
 
 // Transmit a single byte.
 macro void write(char c) => write_impl(c);
@@ -32,8 +24,6 @@ macro void write_line(char[] s) => write_line_impl(s);
 
 // Transmit a null-terminated char* string followed by CR + LF.
 macro void write_line_zstring(char* s) => write_line_zstring_impl(s);
-
-// ── RX ────────────────────────────────────────────────────────────────────────
 
 // Returns true if at least one byte is waiting. Non-blocking.
 macro bool can_read() => can_read_impl();

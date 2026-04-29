@@ -10,16 +10,33 @@ const char CMD_MEASURE = 0xAC;
 
 fn bool init_impl() {
     i2c::begin_transmission(AHT20_ADDR);
+    i2c::write_byte(0xBA);
+    i2c::end_transmission();
+
+    time::delay_ms(20);
+
+    for (int i = 0; i < 100; i++) {
+        if (i2c::request_from(AHT20_ADDR, 1) == 0) return false;
+        char status = i2c::read_byte();
+        if ((status & 0x80) == 0) break;
+        time::delay_ms(10);
+    }
+
+    i2c::begin_transmission(AHT20_ADDR);
     i2c::write_byte(CMD_INIT);
     i2c::write_byte(0x08);
     i2c::write_byte(0x00);
     if (i2c::end_transmission() != 0) return false;
 
-    time::delay_ms(40);
-
-    if (i2c::request_from(AHT20_ADDR, 1) == 0) return false;
-    char status = i2c::read_byte();
-    return (status & 0x08) != 0;
+    for (int i = 0; i < 100; i++) {
+        if (i2c::request_from(AHT20_ADDR, 1) == 0) return false;
+        char status = i2c::read_byte();
+        if ((status & 0x80) == 0) {
+            return (status & 0x08) != 0;
+        }
+        time::delay_ms(10);
+    }
+    return false;
 }
 
 fn Reading read_impl() {
@@ -31,31 +48,29 @@ fn Reading read_impl() {
         return { .valid = 0 };
     }
 
-    time::delay_ms(80);
+    for (int i = 0; i < 100; i++) {
+        if (i2c::request_from(AHT20_ADDR, 1) == 0) return { .valid = 0 };
+        char status = i2c::read_byte();
+        if ((status & 0x80) == 0) break;
+        time::delay_ms(10);
+    }
 
     if (i2c::request_from(AHT20_ADDR, 6) != 6) {
         return { .valid = 0 };
     }
 
     char status = i2c::read_byte();
-    if (status & 0x80) {
-        return { .valid = 0 };
-    }
-
     char hum_h = i2c::read_byte();
     char hum_m = i2c::read_byte();
     char hum_l_temp_h = i2c::read_byte();
     char temp_m = i2c::read_byte();
     char temp_l = i2c::read_byte();
 
-    // Fast 16-bit fixed-point conversion (no float).
-    // Dropping the lowest 4 humidity / 5 temperature bits introduces
-    // < 0.002 %RH and < 0.001 C error – negligible for this sensor.
-    ushort raw_hum  = ((ushort)hum_h << 8) | (ushort)hum_m;
-    ushort raw_temp = (((ushort)hum_l_temp_h & 0x0F) << 11) | ((ushort)temp_m << 3) | ((ushort)temp_l >> 5);
+    uint hum  = ((uint)hum_h << 12) | ((uint)hum_m << 4) | ((uint)hum_l_temp_h >> 4);
+    uint temp = ((uint)hum_l_temp_h & 0x0F) << 16 | ((uint)temp_m << 8) | (uint)temp_l;
 
-    int humidity    = (int)((raw_hum * 625U) >> 12);
-    int temperature = (int)((raw_temp * 625U) >> 10) - 5000;
+    int humidity    = (int)((hum * 100U) / 1024 / 1024 * 100);
+    int temperature = (int)((temp * 200U) / 1024 / 1024 * 100) - 5000;
 
     return {
         .temperature = temperature,

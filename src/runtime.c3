@@ -1,9 +1,5 @@
 module arduino::runtime @private;
 
-// GCC/libgcc-style runtime helpers for AVR.
-// The project is built without libgcc, so any operation the compiler
-// lowers to a runtime call must be provided here.
-
 // Signed 16-bit multiply.
 fn short __mulhi3(short a, short b) @export("__mulhi3") {
     bool negative = (a < 0) != (b < 0);

@@ -20,8 +20,8 @@ fn void __init() @naked @noreturn @export("__init") @section(".init") {
     asm("eor r1, r1");
 
     // Copy .data from flash to SRAM.
-    // The C3 compiler generates LD (data-space load) for *src, but _etext
-    // is a flash address.  We must use LPM (load program memory) instead.
+    // The C3 compiler generates data-space load for *src, but _etext
+    // is a flash address. We must use LPM instead.
     asm("ldi r26, lo8(_sdata)");
     asm("ldi r27, hi8(_sdata)");
     asm("ldi r30, lo8(_etext)");
