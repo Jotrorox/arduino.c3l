@@ -35,12 +35,11 @@ fn void adc_init() {
     initialized = true;
 }
 
-fn ushort analog_read_impl(Pin pin) {
+fn ushort analog_read_impl(AnalogPin pin) {
     adc_init();
 
-    // A0-A5 are aliased to pins 14-19 in gpio.c3i;
-    // they map directly to ADC channels 0-5.
-    int channel = (int)pin - 14;
+    // AnalogPin values are ADC channels 0-5 directly.
+    int channel = (int)pin;
     if (channel < 0 || channel > 5) return 0;
 
     // Select channel, keep AVCC reference

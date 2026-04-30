@@ -51,14 +51,42 @@ macro usz read_buf_exact(char[] buf) => read_buf_exact_impl(buf);
 
 // Blocking line read.
 // Reads characters until \n or \r\n is received, or buf is full.
-//   • The line terminator is consumed but NOT stored.
-//   • buf is always null-terminated (buf[n] = 0) so buf.ptr is safe
+//   - The line terminator is consumed but NOT stored.
+//   - buf is always null-terminated (buf[n] = 0) so buf.ptr is safe
 //     to use as a char* / ZString.
-//   • buf.len must be >= 1 (one byte reserved for the null terminator).
-//   • Returns the number of data bytes written, excluding the '\0'.
+//   - buf.len must be >= 1 (one byte reserved for the null terminator).
+//   - Returns the number of data bytes written, excluding the '\0'.
 // To use the result as a slice: buf[0..n-1]  (n > 0)
 //
 //   char[64] line_buf;
 //   usz n = uart::read_line(line_buf);
-//   if (n > 0) uart::write_line(line_buf[0..n-1]);
+//   if (n > 0) uart::write_line(buf[0..n-1]);
 macro usz read_line(char[] buf) => read_line_impl(buf);
+
+// ── Generic print ─────────────────────────────────────────────────────────────
+
+// Convenience macro wrapping a generic implementation.
+// Supports all integer types, bool, char[], String, and char*.
+// Usage:
+//   uart::print(42);
+//   uart::print("hello");
+macro print(x) => print_impl{$typeof(x)}(x);
+
+// Print value followed by CR+LF.
+macro printn(x) => println_impl{$typeof(x)}(x);
+
+// ── Formatted print (printf) ──────────────────────────────────────────────────
+
+// Standard C-style formatted output.
+// Supported specifiers: %% %d %i %u %x %X %s %c %p
+// Width and zero-padding are supported (e.g. %02d, %4x).
+// Usage:
+//   uart::printf("Temp: %d C\r\n", 23);
+//   uart::printf("Hex: 0x%02X\r\n", 0xAB);
+macro printf(fmt, args...) => printf_impl(fmt, ...args);
+
+// printf followed by CR+LF.
+macro printfn(fmt, args...) {
+    printf_impl(fmt, ...args);
+    write_crlf_impl();
+}

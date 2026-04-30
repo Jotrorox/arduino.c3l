@@ -2,7 +2,9 @@ module arduino::adc;
 
 import arduino::gpio;
 
-// Use the A0-A5 pin constants from arduino::gpio (pins 14-19).
-// analog_read returns a 10-bit value in the range 0-1023.
-macro ushort analog_read(Pin pin) => analog_read_impl(pin);
+// analog_read accepts only AnalogPin values (A0-A5).
+// The compiler resolves unqualified 'A0' etc. to AnalogPin.A0
+// when passed to this function.
+// Returns a 10-bit value in the range 0-1023.
+macro ushort analog_read(AnalogPin pin) => analog_read_impl(pin);
 
