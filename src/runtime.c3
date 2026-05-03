@@ -1,7 +1,5 @@
 module arduino::runtime @private;
 
-// ── Multiply ──────────────────────────────────────────────────────────────────
-
 // Signed 16-bit multiply.
 fn short __mulhi3(short a, short b) @export("__mulhi3") {
     bool negative = (a < 0) != (b < 0);
@@ -35,8 +33,6 @@ fn int __mulsi3(int a, int b) @export("__mulsi3") {
     int result = (int)ur;
     return negative ? -result : result;
 }
-
-// ── 8-bit divide / modulo ─────────────────────────────────────────────────────
 
 fn char __udivmodqi4(char num, char den) @export("__udivmodqi4") {
     char quot = 0;
@@ -88,8 +84,6 @@ fn ichar __modqi4(ichar num, ichar den) @export("__modqi4") {
     char rem = __umodqi4(unum, uden);
     return negative ? (ichar)(-rem) : (ichar)rem;
 }
-
-// ── 16-bit divide / modulo ────────────────────────────────────────────────────
 
 // Returns (quotient << 16) | remainder so that r24:r25 = quot and r22:r23 = rem.
 fn uint __udivmodhi4(ushort num, ushort den) @export("__udivmodhi4") {
@@ -144,8 +138,6 @@ fn short __modhi4(short num, short den) @export("__modhi4") {
     return (short)__divmodhi4(num, den);
 }
 
-// ── 32-bit divide / modulo ────────────────────────────────────────────────────
-
 // Returns (quotient << 32) | remainder.
 fn ulong __udivmodsi4(uint num, uint den) @export("__udivmodsi4") {
     uint quot = 0;
@@ -198,8 +190,6 @@ fn uint __umodsi4(uint num, uint den) @export("__umodsi4") {
 fn int __modsi4(int num, int den) @export("__modsi4") {
     return (int)__divmodsi4(num, den);
 }
-
-// ── Memory helpers (compiler may emit these) ──────────────────────────────────
 
 fn void* memset(void* dest, int val, usz len) @export("memset") {
     char* d = (char*)dest;

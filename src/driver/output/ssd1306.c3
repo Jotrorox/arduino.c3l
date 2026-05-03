@@ -3,8 +3,6 @@ module arduino::driver::output::ssd1306 @private;
 import arduino::i2c;
 import arduino::time;
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
 const char SSD1306_CMD       = 0x00;
 const char SSD1306_DATA      = 0x40;
 const char SSD1306_DISPLAYOFF         = 0xAE;
@@ -26,15 +24,12 @@ const char SSD1306_DISPLAYON          = 0xAF;
 const char SSD1306_COLUMNADDR         = 0x21;
 const char SSD1306_PAGEADDR           = 0x22;
 
-// ── State ─────────────────────────────────────────────────────────────────────
-
 char device_addr;
 char display_width  = 128;
 char display_height = 64;
 char[1024] framebuffer;
 
-// ── Font (ASCII 32-127, 5×7) ──────────────────────────────────────────────────
-
+// Font (ASCII 32-127, 5×7)
 const char FONT_CHARS   = 96;
 const char FONT_WIDTH   = 5;
 const char FONT_HEIGHT  = 7;
@@ -138,8 +133,6 @@ char[480] font5x7 = {
     0x08, 0x1C, 0x2A, 0x08, 0x08  // DEL
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 fn void send_cmd(char cmd) {
     i2c::begin_transmission(device_addr);
     i2c::write_byte(SSD1306_CMD);
@@ -150,8 +143,6 @@ fn void send_cmd(char cmd) {
 fn int buf_size() {
     return (int)display_width * ((int)display_height / 8);
 }
-
-// ── Public implementation ─────────────────────────────────────────────────────
 
 fn bool init_impl(char addr, char height) {
     device_addr   = addr;

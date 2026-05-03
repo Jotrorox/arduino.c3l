@@ -1,6 +1,6 @@
 module arduino::i2c @private;
 
-// ── TWI register addresses ────────────────────────────────────────────────────
+// TWI register addresses
 const uint TWBR_REG = 0xB8;
 const uint TWSR_REG = 0xB9;
 const uint TWDR_REG = 0xBB;
@@ -28,7 +28,7 @@ const char STATUS_SLA_R_NACK = 0x48;
 const char STATUS_RX_ACK     = 0x50;
 const char STATUS_RX_NACK    = 0x58;
 
-// ── Buffers ───────────────────────────────────────────────────────────────────
+// Buffers
 const char BUF_SIZE = 32;
 char[BUF_SIZE] tx_buf;
 char[BUF_SIZE] rx_buf;
@@ -38,7 +38,7 @@ char rx_len = 0;
 char rx_pos = 0;
 char tx_addr = 0;
 
-// ── Register helpers ──────────────────────────────────────────────────────────
+// Register helpers
 fn void reg_write(uint addr, char val) {
     @volatile_store(*(char*)(uptr)addr, val);
 }
@@ -55,7 +55,7 @@ fn char twi_status() {
     return (char)(reg_read(TWSR_REG) & STATUS_MASK);
 }
 
-// ── Low-level primitives ──────────────────────────────────────────────────────
+// Low-level primitives
 
 fn void init_impl() {
     // SDA = PC4, SCL = PC5. Enable internal pull-ups.
@@ -118,7 +118,7 @@ fn bool start_read_impl(char addr) {
     return twi_status() == STATUS_SLA_R_ACK;
 }
 
-// ── High-level Wire-like API ──────────────────────────────────────────────────
+// High-level Wire-like API
 
 fn void begin_impl() {
     tx_len = 0;

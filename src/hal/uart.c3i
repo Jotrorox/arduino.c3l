@@ -63,8 +63,6 @@ macro usz read_buf_exact(char[] buf) => read_buf_exact_impl(buf);
 //   if (n > 0) uart::write_line(buf[0..n-1]);
 macro usz read_line(char[] buf) => read_line_impl(buf);
 
-// ── Generic print ─────────────────────────────────────────────────────────────
-
 // Convenience macro wrapping a generic implementation.
 // Supports all integer types, bool, char[], String, and char*.
 // Usage:
@@ -74,8 +72,6 @@ macro print(x) => print_impl{$typeof(x)}(x);
 
 // Print value followed by CR+LF.
 macro printn(x) => println_impl{$typeof(x)}(x);
-
-// ── Formatted print (printf) ──────────────────────────────────────────────────
 
 // Standard C-style formatted output.
 // Supported specifiers: %% %d %i %u %x %X %s %c %p

@@ -76,8 +76,6 @@ fn void begin_impl(uint baud) {
     initialized = true;
 }
 
-// ── TX ────────────────────────────────────────────────────────────────────────
-
 fn void write_impl(char c) {
     if (!initialized) begin_impl(9600);
     while ((reg_read(UCSR0A_REG) & UDRE0) == 0) {}
@@ -114,8 +112,6 @@ fn void write_line_zstring_impl(char* s) {
     write_zstring_impl(s);
     write_crlf_impl();
 }
-
-// ── RX ────────────────────────────────────────────────────────────────────────
 
 fn bool can_read_impl() {
     if (!initialized) begin_impl(9600);
@@ -193,8 +189,6 @@ fn usz read_line_impl(char[] buf) {
     buf[n] = 0; // null-terminate so buf.ptr can be used as char* safely
     return n;   // excludes the '\0'
 }
-
-// ── Integer printing helpers ──────────────────────────────────────────────────
 
 fn void print_ulong(ulong value) {
     if (value == 0) {
@@ -303,8 +297,6 @@ fn void print_hex_ulong_width(ulong value, int width, bool upper) {
     }
 }
 
-// ── Generic print ─────────────────────────────────────────────────────────────
-
 fn void print_impl(Type value) <Type> {
     $if (Type == int):
         print_long((long)value);
@@ -365,8 +357,6 @@ fn void println_impl(Type value) <Type> {
     print_impl(value);
     write_crlf_impl();
 }
-
-// ── Formatted print (printf) ──────────────────────────────────────────────────
 
 fn void printf_impl(char[] fmt, args...) {
     int arg_idx = 0;
