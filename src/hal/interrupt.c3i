@@ -1,0 +1,27 @@
+module arduino::interrupt;
+
+// External interrupt lines on ATmega328P / Arduino Uno.
+// INT0 is digital pin D2, INT1 is digital pin D3.
+constdef ExternalInterrupt {
+    INT0 = 0,
+    INT1 = 1,
+}
+
+// Hardware sense-control values match EICRA ISC bits.
+constdef InterruptMode {
+    LOW     = 0,
+    CHANGE  = 1,
+    FALLING = 2,
+    RISING  = 3,
+}
+
+alias InterruptHandler = fn void();
+
+macro void interrupts() => interrupts_impl();
+macro void no_interrupts() => no_interrupts_impl();
+
+macro void attach_interrupt(ExternalInterrupt interrupt, InterruptMode mode, InterruptHandler handler)
+    => attach_interrupt_impl(interrupt, mode, handler);
+
+macro void detach_interrupt(ExternalInterrupt interrupt)
+    => detach_interrupt_impl(interrupt);

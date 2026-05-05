@@ -8,6 +8,66 @@ extern char _sbss;
 extern char _ebss;
 extern char _etext;
 
+fn void __bad_interrupt() @export("__bad_interrupt") @noreturn {
+    abort();
+}
+
+fn void __vectors() @naked @export("__vectors") @section(".vectors") {
+    // ATmega328P vectors are 2 words wide. Use rjmp+nop to match JMP-sized slots.
+    asm("rjmp __init");
+    asm("nop");
+    asm("rjmp __vector_1");
+    asm("nop");
+    asm("rjmp __vector_2");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+    asm("rjmp __bad_interrupt");
+    asm("nop");
+}
+
 fn void abort() @export("abort") @noreturn {
     asm("rjmp .-2");
 }

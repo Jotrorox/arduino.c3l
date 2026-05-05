@@ -7,6 +7,7 @@ MEMORY {
 
 SECTIONS {
     .text 0x0 : {
+        KEEP(*(.vectors))
         KEEP(*(.init*))
         *(.text*)
         _etext = .;

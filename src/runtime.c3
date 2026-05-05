@@ -119,7 +119,7 @@ fn int __divmodhi4(short num, short den) @export("__divmodhi4") {
     short srem = (short)rem;
     if (negative) squot = (short)(-squot);
     if (num < 0) srem = (short)(-srem);
-    return ((int)squot << 16) | (uint)(ushort)srem;
+    return (uint)((int)squot << 16) | (uint)(ushort)srem;
 }
 
 fn ushort __udivhi4(ushort num, ushort den) @export("__udivhi4") {
@@ -172,7 +172,7 @@ fn long __divmodsi4(int num, int den) @export("__divmodsi4") {
     int srem = (int)rem;
     if (negative) squot = -squot;
     if (num < 0) srem = -srem;
-    return ((long)squot << 32) | (ulong)(uint)srem;
+    return (ulong)((long)squot << 32) | (ulong)(uint)srem;
 }
 
 fn uint __udivsi4(uint num, uint den) @export("__udivsi4") {
