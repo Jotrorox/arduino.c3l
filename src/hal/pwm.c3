@@ -45,6 +45,10 @@ fn void reg_set(uint addr, char mask) {
     reg_write(addr, (char)(reg_read(addr) | mask));
 }
 
+fn void reg_clr(uint addr, char mask) {
+    reg_write(addr, (char)(reg_read(addr) & (char)~mask));
+}
+
 fn void pin_set_output(uint ddr_addr, int bit) {
     reg_set(ddr_addr, (char)(1 << bit));
 }
@@ -75,36 +79,70 @@ fn void write_ocr16(uint low_addr, uint high_addr, char duty) {
     reg_write(low_addr, duty);
 }
 
+fn void disconnect_pwm(PWMPin pin) {
+    switch (pin) {
+        case PWMPin.D3:  reg_clr(TCCR2A_REG, 0x30); // OC2B / COM2B1:0
+        case PWMPin.D5:  reg_clr(TCCR0A_REG, 0x30); // OC0B / COM0B1:0
+        case PWMPin.D6:  reg_clr(TCCR0A_REG, 0xC0); // OC0A / COM0A1:0
+        case PWMPin.D9:  reg_clr(TCCR1A_REG, 0xC0); // OC1A / COM1A1:0
+        case PWMPin.D10: reg_clr(TCCR1A_REG, 0x30); // OC1B / COM1B1:0
+        case PWMPin.D11: reg_clr(TCCR2A_REG, 0xC0); // OC2A / COM2A1:0
+    }
+}
+
+fn void digital_write_pwm_pin(PWMPin pin, bool high) {
+    uint port_addr = DDRD_REG + 1;
+    int bit = 0;
+    switch (pin) {
+        case PWMPin.D3:  bit = 3;
+        case PWMPin.D5:  bit = 5;
+        case PWMPin.D6:  bit = 6;
+        case PWMPin.D9:  port_addr = DDRB_REG + 1; bit = 1;
+        case PWMPin.D10: port_addr = DDRB_REG + 1; bit = 2;
+        case PWMPin.D11: port_addr = DDRB_REG + 1; bit = 3;
+    }
+    disconnect_pwm(pin);
+    if (high) {
+        reg_set(port_addr, (char)(1 << bit));
+    } else {
+        reg_clr(port_addr, (char)(1 << bit));
+    }
+}
+
 fn void analog_write_impl(PWMPin pin, char duty) {
+    pin_set_output((int)pin <= 7 ? DDRD_REG : DDRB_REG, (int)pin <= 7 ? (int)pin : (int)pin - 8);
+    if (duty == MIN_DUTY) {
+        digital_write_pwm_pin(pin, false);
+        return;
+    }
+    if (duty == MAX_DUTY) {
+        digital_write_pwm_pin(pin, true);
+        return;
+    }
+
     switch (pin) {
         case PWMPin.D3:    // PD3 = OC2B
             ensure_timer2();
-            pin_set_output(DDRD_REG, 3);
             reg_set(TCCR2A_REG, COM_B_ENABLE);
             reg_write(OCR2B_REG, duty);
         case PWMPin.D5:    // PD5 = OC0B
             ensure_timer0();
-            pin_set_output(DDRD_REG, 5);
             reg_set(TCCR0A_REG, COM_B_ENABLE);
             reg_write(OCR0B_REG, duty);
         case PWMPin.D6:    // PD6 = OC0A
             ensure_timer0();
-            pin_set_output(DDRD_REG, 6);
             reg_set(TCCR0A_REG, COM_A_ENABLE);
             reg_write(OCR0A_REG, duty);
         case PWMPin.D9:    // PB1 = OC1A
             ensure_timer1();
-            pin_set_output(DDRB_REG, 1);
             reg_set(TCCR1A_REG, COM_A_ENABLE);
             write_ocr16(OCR1AL_REG, OCR1AH_REG, duty);
         case PWMPin.D10:   // PB2 = OC1B
             ensure_timer1();
-            pin_set_output(DDRB_REG, 2);
             reg_set(TCCR1A_REG, COM_B_ENABLE);
             write_ocr16(OCR1BL_REG, OCR1BH_REG, duty);
         case PWMPin.D11:   // PB3 = OC2A
             ensure_timer2();
-            pin_set_output(DDRB_REG, 3);
             reg_set(TCCR2A_REG, COM_A_ENABLE);
             reg_write(OCR2A_REG, duty);
     }

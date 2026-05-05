@@ -1,6 +1,8 @@
 module arduino;
 
 extern fn void start();
+extern fn void arduino_time_init();
+extern fn void arduino_adc_init();
 
 extern char _sdata;
 extern char _edata;
@@ -50,7 +52,7 @@ fn void __vectors() @naked @export("__vectors") @section(".vectors") {
     asm("nop");
     asm("rjmp __bad_interrupt");
     asm("nop");
-    asm("rjmp __bad_interrupt");
+    asm("rjmp __vector_18");
     asm("nop");
     asm("rjmp __bad_interrupt");
     asm("nop");
@@ -70,6 +72,11 @@ fn void __vectors() @naked @export("__vectors") @section(".vectors") {
 
 fn void abort() @export("abort") @noreturn {
     asm("rjmp .-2");
+}
+
+fn void arduino_init() {
+    arduino_time_init();
+    arduino_adc_init();
 }
 
 fn void __init() @naked @noreturn @export("__init") @section(".init") {
@@ -105,6 +112,7 @@ fn void __init() @naked @noreturn @export("__init") @section(".init") {
         bss++;
     }
 
+    arduino_init();
     start();
     abort();
 }

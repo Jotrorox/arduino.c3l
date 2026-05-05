@@ -17,13 +17,20 @@ const char UDRE0 = 0x20;
 const char U2X0  = 0x02;
 
 // UCSR0B bits
-const char RXEN0 = 0x10;
-const char TXEN0 = 0x08;
+const char RXCIE0 = 0x80;
+const char RXEN0  = 0x10;
+const char TXEN0  = 0x08;
 
 // UCSR0C bits
 const char UCSZ0_8BIT = 0x06; // 8N1
 
+const char RX_BUFFER_SIZE = 64;
+const char RX_BUFFER_MASK = RX_BUFFER_SIZE - 1;
+
 bool initialized = false;
+char[64] rx_buffer;
+char rx_head = 0;
+char rx_tail = 0;
 
 fn void reg_write(uint addr, char val) {
     @volatile_store(*(char*)(uptr)addr, val);
@@ -31,6 +38,38 @@ fn void reg_write(uint addr, char val) {
 
 fn char reg_read(uint addr) {
     return @volatile_load(*(char*)(uptr)addr);
+}
+
+fn void rx_store(char c) {
+    char head = @volatile_load(rx_head);
+    char next = (char)((head + 1) & RX_BUFFER_MASK);
+
+    // Drop the new byte when the buffer is full, matching Arduino's
+    // non-blocking ISR behavior (old buffered data is preserved).
+    if (next != @volatile_load(rx_tail)) {
+        rx_buffer[head] = c;
+        @volatile_store(rx_head, next);
+    }
+}
+
+fn void rx_poll_hardware() {
+    while ((reg_read(UCSR0A_REG) & RXC0) != 0) {
+        rx_store(reg_read(UDR0_REG));
+    }
+}
+
+fn bool rx_available() {
+    rx_poll_hardware();
+    return @volatile_load(rx_head) != @volatile_load(rx_tail);
+}
+
+fn char rx_read_buffered() {
+    while (!rx_available()) {}
+
+    char tail = @volatile_load(rx_tail);
+    char c = rx_buffer[tail];
+    @volatile_store(rx_tail, (char)((tail + 1) & RX_BUFFER_MASK));
+    return c;
 }
 
 fn ushort ubrr_for_baud(uint baud) {
@@ -70,8 +109,13 @@ fn void begin_impl(uint baud) {
     // it leaves UCSR0A in an indeterminate state.
     reg_write(UCSR0A_REG, 0x00);
 
+    // Reset buffered RX state whenever Serial is (re)configured.
+    @volatile_store(rx_head, (char)0);
+    @volatile_store(rx_tail, (char)0);
+
     reg_write(UCSR0C_REG, UCSZ0_8BIT);
-    reg_write(UCSR0B_REG, (char)(RXEN0 | TXEN0));
+    reg_write(UCSR0B_REG, (char)(RXCIE0 | RXEN0 | TXEN0));
+    asm("sei");
 
     initialized = true;
 }
@@ -115,22 +159,21 @@ fn void write_line_zstring_impl(char* s) {
 
 fn bool can_read_impl() {
     if (!initialized) begin_impl(9600);
-    return (reg_read(UCSR0A_REG) & RXC0) != 0;
+    return rx_available();
 }
 
 fn char read_impl() {
     if (!initialized) begin_impl(9600);
-    while ((reg_read(UCSR0A_REG) & RXC0) == 0) {}
-    return reg_read(UDR0_REG);
+    return rx_read_buffered();
 }
 
-// Non-blocking: drain whatever bytes are waiting in the HW FIFO into buf.
-// Returns the number of bytes written. 0 means nothing was waiting.
+// Non-blocking: copy bytes from the interrupt-driven RX ring into buf.
+// Returns the number of bytes written. 0 means nothing was buffered.
 fn usz read_buf_impl(char[] buf) {
     if (!initialized) begin_impl(9600);
     usz n = 0;
-    while (n < buf.len && (reg_read(UCSR0A_REG) & RXC0) != 0) {
-        buf[n] = reg_read(UDR0_REG);
+    while (n < buf.len && rx_available()) {
+        buf[n] = rx_read_buffered();
         n++;
     }
     return n;
@@ -141,8 +184,7 @@ fn usz read_buf_impl(char[] buf) {
 fn usz read_buf_exact_impl(char[] buf) {
     if (!initialized) begin_impl(9600);
     for (usz i = 0; i < buf.len; i++) {
-        while ((reg_read(UCSR0A_REG) & RXC0) == 0) {}
-        buf[i] = reg_read(UDR0_REG);
+        buf[i] = rx_read_buffered();
     }
     return buf.len;
 }
@@ -159,8 +201,7 @@ fn usz read_line_impl(char[] buf) {
     usz cap = buf.len - 1; // one byte reserved for '\0'
 
     while (n < cap) {
-        while ((reg_read(UCSR0A_REG) & RXC0) == 0) {}
-        char c = reg_read(UDR0_REG);
+        char c = rx_read_buffered();
 
         if (c == '\n') break;
 
@@ -168,11 +209,11 @@ fn usz read_line_impl(char[] buf) {
             // Attempt to consume a paired \n (CR+LF).
             // Spin briefly rather than blocking forever (bare-CR senders).
             uint timeout = 1000;
-            while (timeout > 0 && (reg_read(UCSR0A_REG) & RXC0) == 0) {
+            while (timeout > 0 && !rx_available()) {
                 timeout--;
             }
-            if ((reg_read(UCSR0A_REG) & RXC0) != 0) {
-                char next = reg_read(UDR0_REG);
+            if (rx_available()) {
+                char next = rx_read_buffered();
                 if (next != '\n') {
                     // Not the paired LF - treat as regular data
                     buf[n] = next;
@@ -482,4 +523,48 @@ fn void printf_impl(char[] fmt, args...) {
                 write_impl('?');
         }
     }
+}
+
+fn void usart_rx_impl() @export("usart_rx_impl") {
+    rx_store(reg_read(UDR0_REG));
+}
+
+fn void __vector_18() @naked @export("__vector_18") {
+    // USART RX complete. Save the same call-clobbered register set used by
+    // the Timer0 ISR wrapper, then return with RETI.
+    asm("push r0");
+    asm("in r0, 0x3f");
+    asm("push r0");
+    asm("push r1");
+    asm("eor r1, r1");
+    asm("push r18");
+    asm("push r19");
+    asm("push r20");
+    asm("push r21");
+    asm("push r22");
+    asm("push r23");
+    asm("push r24");
+    asm("push r25");
+    asm("push r26");
+    asm("push r27");
+    asm("push r30");
+    asm("push r31");
+    asm("rcall usart_rx_impl");
+    asm("pop r31");
+    asm("pop r30");
+    asm("pop r27");
+    asm("pop r26");
+    asm("pop r25");
+    asm("pop r24");
+    asm("pop r23");
+    asm("pop r22");
+    asm("pop r21");
+    asm("pop r20");
+    asm("pop r19");
+    asm("pop r18");
+    asm("pop r1");
+    asm("pop r0");
+    asm("out 0x3f, r0");
+    asm("pop r0");
+    asm("reti");
 }

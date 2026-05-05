@@ -27,7 +27,7 @@ fn char reg_read(uint addr) {
     return @volatile_load(*(char*)(uptr)addr);
 }
 
-fn void adc_init() {
+fn void arduino_adc_init() @export("arduino_adc_init") {
     if (initialized) return;
     reg_write(ADMUX_REG,  AVCC_REF);
     reg_write(ADCSRA_REG, (char)(ADEN | ADPS));
@@ -36,7 +36,7 @@ fn void adc_init() {
 }
 
 fn ushort analog_read_impl(AnalogPin pin) {
-    adc_init();
+    arduino_adc_init();
 
     // AnalogPin values are ADC channels 0-5 directly.
     int channel = (int)pin;

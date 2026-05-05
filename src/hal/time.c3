@@ -37,7 +37,7 @@ fn void reg_set(uint addr, char mask) {
     reg_write(addr, (char)(reg_read(addr) | mask));
 }
 
-fn void ensure_timer0_time() {
+fn void arduino_time_init() @export("arduino_time_init") {
     if (timer0_time_active) return;
 
     // Preserve COM0A/COM0B bits if PWM was already enabled, but make sure
@@ -50,7 +50,7 @@ fn void ensure_timer0_time() {
 }
 
 fn uint millis_impl() {
-    ensure_timer0_time();
+    arduino_time_init();
 
     char old_sreg = reg_read(SREG);
     asm("cli");
@@ -60,7 +60,7 @@ fn uint millis_impl() {
 }
 
 fn uint micros_impl() {
-    ensure_timer0_time();
+    arduino_time_init();
 
     char old_sreg = reg_read(SREG);
     asm("cli");
