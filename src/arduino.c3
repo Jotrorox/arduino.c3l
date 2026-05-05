@@ -46,7 +46,7 @@ fn void __vectors() @naked @export("__vectors") @section(".vectors") {
     asm("nop");
     asm("rjmp __bad_interrupt");
     asm("nop");
-    asm("rjmp __bad_interrupt");
+    asm("rjmp __vector_16");
     asm("nop");
     asm("rjmp __bad_interrupt");
     asm("nop");

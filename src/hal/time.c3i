@@ -1,5 +1,7 @@
 module arduino::time;
 
+macro uint millis() => millis_impl();
+macro uint micros() => micros_impl();
 macro void delay_us(uint us) => delay_us_impl(us);
 macro void delay_ms(uint ms) => delay_ms_impl(ms);
 macro void delay(uint ms) => delay_ms_impl(ms);
