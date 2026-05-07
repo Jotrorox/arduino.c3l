@@ -20,6 +20,7 @@ const char SSD1306_SETPRECHARGE       = 0xD9;
 const char SSD1306_SETVCOMDETECT      = 0xDB;
 const char SSD1306_DISPLAYALLON_RESUME= 0xA4;
 const char SSD1306_NORMALDISPLAY      = 0xA6;
+const char SSD1306_INVERTDISPLAY      = 0xA7;
 const char SSD1306_DISPLAYON          = 0xAF;
 const char SSD1306_COLUMNADDR         = 0x21;
 const char SSD1306_PAGEADDR           = 0x22;
@@ -27,6 +28,9 @@ const char SSD1306_PAGEADDR           = 0x22;
 char device_addr;
 char display_width  = 128;
 char display_height = 64;
+int cursor_x = 0;
+int cursor_y = 0;
+int text_scale = 1;
 char[1024] framebuffer;
 
 // Font (ASCII 32-127, 5×7)
@@ -226,14 +230,19 @@ fn void draw_pixel_impl(int x, int y, bool color) {
 }
 
 fn void draw_char_impl(int x, int y, char c) {
+    draw_char_scaled_impl(x, y, c, 1);
+}
+
+fn void draw_char_scaled_impl(int x, int y, char c, int scale) {
     if (c < 32 || c > 127) return;
+    if (scale < 1) scale = 1;
 
     int idx = (int)(c - 32) * FONT_WIDTH;
     for (int col = 0; col < FONT_WIDTH; col++) {
         char line = font5x7[idx + col];
         for (int row = 0; row < FONT_HEIGHT; row++) {
             if ((line & (char)(1 << row)) != 0) {
-                draw_pixel_impl(x + col, y + row, true);
+                fill_rect_impl(x + col * scale, y + row * scale, scale, scale);
             }
         }
     }
@@ -245,6 +254,28 @@ fn void draw_string_impl(int x, int y, char[] s) {
     }
 }
 
+fn void draw_string_scaled_impl(int x, int y, char[] s, int scale) {
+    if (scale < 1) scale = 1;
+    for (usz i = 0; i < s.len; i++) {
+        draw_char_scaled_impl(x + (int)i * 6 * scale, y, s[i], scale);
+    }
+}
+
+fn void set_cursor_impl(int x, int y) {
+    cursor_x = x;
+    cursor_y = y;
+}
+
+fn void set_text_scale_impl(int scale) {
+    if (scale < 1) scale = 1;
+    text_scale = scale;
+}
+
+fn void print_impl(char[] s) {
+    draw_string_scaled_impl(cursor_x, cursor_y, s, text_scale);
+    cursor_x += (int)s.len * 6 * text_scale;
+}
+
 fn void draw_hline_impl(int x, int y, int w) {
     for (int i = 0; i < w; i++) {
         draw_pixel_impl(x + i, y, true);
@@ -254,6 +285,34 @@ fn void draw_hline_impl(int x, int y, int w) {
 fn void draw_vline_impl(int x, int y, int h) {
     for (int i = 0; i < h; i++) {
         draw_pixel_impl(x, y + i, true);
+    }
+}
+
+fn void draw_line_impl(int x0, int y0, int x1, int y1) {
+    int dx = x1 - x0;
+    if (dx < 0) dx = -dx;
+    int sx = -1;
+    if (x0 < x1) sx = 1;
+
+    int dy = y1 - y0;
+    if (dy < 0) dy = -dy;
+    dy = -dy;
+    int sy = -1;
+    if (y0 < y1) sy = 1;
+
+    int err = dx + dy;
+    while (true) {
+        draw_pixel_impl(x0, y0, true);
+        if (x0 == x1 && y0 == y1) return;
+        int e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            y0 += sy;
+        }
     }
 }
 
@@ -269,5 +328,59 @@ fn void fill_rect_impl(int x, int y, int w, int h) {
         for (int col = 0; col < w; col++) {
             draw_pixel_impl(x + col, y + row, true);
         }
+    }
+}
+
+fn void draw_circle_impl(int x0, int y0, int r) {
+    int x = r;
+    int y = 0;
+    int err = 0;
+    while (x >= y) {
+        draw_pixel_impl(x0 + x, y0 + y, true);
+        draw_pixel_impl(x0 + y, y0 + x, true);
+        draw_pixel_impl(x0 - y, y0 + x, true);
+        draw_pixel_impl(x0 - x, y0 + y, true);
+        draw_pixel_impl(x0 - x, y0 - y, true);
+        draw_pixel_impl(x0 - y, y0 - x, true);
+        draw_pixel_impl(x0 + y, y0 - x, true);
+        draw_pixel_impl(x0 + x, y0 - y, true);
+        y++;
+        if (err <= 0) {
+            err += 2 * y + 1;
+        }
+        if (err > 0) {
+            x--;
+            err -= 2 * x + 1;
+        }
+    }
+}
+
+fn void fill_circle_impl(int x0, int y0, int r) {
+    for (int y = -r; y <= r; y++) {
+        for (int x = -r; x <= r; x++) {
+            if (x * x + y * y <= r * r) {
+                draw_pixel_impl(x0 + x, y0 + y, true);
+            }
+        }
+    }
+}
+
+fn void draw_bitmap_impl(int x, int y, char[] bitmap, int w, int h) {
+    int byte_width = (w + 7) / 8;
+    for (int row = 0; row < h; row++) {
+        for (int col = 0; col < w; col++) {
+            int idx = row * byte_width + col / 8;
+            if (idx < (int)bitmap.len && (bitmap[idx] & (char)(0x80 >> (col % 8))) != 0) {
+                draw_pixel_impl(x + col, y + row, true);
+            }
+        }
+    }
+}
+
+fn void invert_impl(bool invert) {
+    if (invert) {
+        send_cmd(SSD1306_INVERTDISPLAY);
+    } else {
+        send_cmd(SSD1306_NORMALDISPLAY);
     }
 }

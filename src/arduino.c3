@@ -112,7 +112,11 @@ fn void __init() @naked @noreturn @export("__init") @section(".init") {
         bss++;
     }
 
-    arduino_init();
+    // Keep startup calls local enough for AVR RCALL by calling the small init
+    // routines directly. Calling arduino_init() itself can be out of range in
+    // larger programs.
+    arduino_time_init();
+    arduino_adc_init();
     start();
     abort();
 }

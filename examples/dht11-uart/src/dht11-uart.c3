@@ -9,7 +9,7 @@ fn void main() @export("start") {
     uart::begin(9600);
     time::delay(1000);
 
-    uart::printfn("=== DHT11 Sensor ===");
+    uart::write_line("=== DHT11 Sensor ===");
 
     while (true) {
         dht11::Reading r = { .valid = 0 };

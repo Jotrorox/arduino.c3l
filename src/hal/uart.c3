@@ -114,7 +114,8 @@ fn void begin_impl(uint baud) {
     @volatile_store(rx_tail, (char)0);
 
     reg_write(UCSR0C_REG, UCSZ0_8BIT);
-    reg_write(UCSR0B_REG, (char)(RXCIE0 | RXEN0 | TXEN0));
+
+    reg_write(UCSR0B_REG, (char)(RXEN0 | TXEN0));
     asm("sei");
 
     initialized = true;
@@ -399,6 +400,53 @@ fn void println_impl(Type value) <Type> {
     write_crlf_impl();
 }
 
+fn void print_any_signed(any a) {
+    switch (a.type) {
+        case int:   print_long((long)*(int*)a.ptr);
+        case short: print_long((long)*(short*)a.ptr);
+        case long:  print_long(*(long*)a.ptr);
+        case char:  print_ulong((ulong)*(char*)a.ptr);
+        case ichar: print_long((long)*(ichar*)a.ptr);
+        case bool:  print_long(*(bool*)a.ptr ? 1 : 0);
+        default:    write_impl('?');
+    }
+}
+
+fn void print_any_unsigned(any a) {
+    switch (a.type) {
+        case uint:   print_ulong((ulong)*(uint*)a.ptr);
+        case ushort: print_ulong((ulong)*(ushort*)a.ptr);
+        case ulong:  print_ulong(*(ulong*)a.ptr);
+        case char:   print_ulong((ulong)*(char*)a.ptr);
+        case int:    print_ulong((ulong)*(int*)a.ptr);
+        case short:  print_ulong((ulong)*(short*)a.ptr);
+        case long:   print_ulong((ulong)*(long*)a.ptr);
+        default:     write_impl('?');
+    }
+}
+
+fn void print_any_fixed2(any a) {
+    // Sensor drivers in this package store temperature/humidity as centi-units.
+    int v = 0;
+    switch (a.type) {
+        case int:   v = *(int*)a.ptr;
+        case short: v = (int)*(short*)a.ptr;
+        case long:  v = (int)*(long*)a.ptr;
+        case char:  v = (int)*(char*)a.ptr;
+        case ichar: v = (int)*(ichar*)a.ptr;
+        default:
+            write_impl('?');
+            return;
+    }
+    if (v < 0) {
+        write_impl('-');
+        v = -v;
+    }
+    print_ulong((ulong)(v / 100));
+    write_impl('.');
+    print_ulong_width((ulong)(v % 100), 2, '0');
+}
+
 fn void printf_impl(char[] fmt, args...) {
     int arg_idx = 0;
     for (usz i = 0; i < fmt.len; i++) {
@@ -410,6 +458,11 @@ fn void printf_impl(char[] fmt, args...) {
         if (i + 1 >= fmt.len) break;
         i++;
 
+        if (fmt[i] == '%') {
+            write_impl('%');
+            continue;
+        }
+
         char pad = ' ';
         if (fmt[i] == '0') {
             pad = '0';
@@ -420,14 +473,16 @@ fn void printf_impl(char[] fmt, args...) {
             width = width * 10 + (int)(fmt[i] - '0');
             i++;
         }
+
+        // Accept printf precision syntax (e.g. %.2f). For %f we always print
+        // the package's centi-unit integer values as two decimal places.
+        if (i < fmt.len && fmt[i] == '.') {
+            i++;
+            while (i < fmt.len && fmt[i] >= '0' && fmt[i] <= '9') i++;
+        }
         if (i >= fmt.len) break;
 
         char spec = fmt[i];
-        if (spec == '%') {
-            write_impl('%');
-            continue;
-        }
-
         if (arg_idx >= args.len) {
             write_impl('?');
             continue;
@@ -438,64 +493,34 @@ fn void printf_impl(char[] fmt, args...) {
         switch (spec) {
             case 'd':
             case 'i':
-                long val = 0;
                 switch (a.type) {
-                    case int:
-                        val = (long)*(int*)a.ptr;
-                    case short:
-                        val = (long)*(short*)a.ptr;
-                    case long:
-                        val = *(long*)a.ptr;
-                    case char:
-                        val = (long)*(char*)a.ptr;
-                    case ichar:
-                        val = (long)*(ichar*)a.ptr;
-                    case bool:
-                        val = *(bool*)a.ptr ? 1 : 0;
-                    default:
-                        write_impl('?');
-                        continue;
+                    case int:   print_long_width((long)*(int*)a.ptr, width, pad);
+                    case short: print_long_width((long)*(short*)a.ptr, width, pad);
+                    case long:  print_long_width(*(long*)a.ptr, width, pad);
+                    case char:  print_ulong_width((ulong)*(char*)a.ptr, width, pad);
+                    case ichar: print_long_width((long)*(ichar*)a.ptr, width, pad);
+                    default:    write_impl('?');
                 }
-                print_long_width(val, width, pad);
             case 'u':
-                ulong val = 0;
-                switch (a.type) {
-                    case uint:
-                        val = (ulong)*(uint*)a.ptr;
-                    case ushort:
-                        val = (ulong)*(ushort*)a.ptr;
-                    case ulong:
-                        val = *(ulong*)a.ptr;
-                    case char:
-                        val = (ulong)*(char*)a.ptr;
-                    default:
-                        write_impl('?');
-                        continue;
-                }
-                print_ulong_width(val, width, pad);
+                print_any_unsigned(a);
             case 'x':
             case 'X':
                 ulong val = 0;
                 switch (a.type) {
-                    case uint:
-                        val = (ulong)*(uint*)a.ptr;
-                    case ushort:
-                        val = (ulong)*(ushort*)a.ptr;
-                    case ulong:
-                        val = *(ulong*)a.ptr;
-                    case char:
-                        val = (ulong)*(char*)a.ptr;
-                    case int:
-                        val = (ulong)*(int*)a.ptr;
-                    case short:
-                        val = (ulong)*(short*)a.ptr;
-                    case long:
-                        val = (ulong)*(long*)a.ptr;
+                    case uint:   val = (ulong)*(uint*)a.ptr;
+                    case ushort: val = (ulong)*(ushort*)a.ptr;
+                    case ulong:  val = *(ulong*)a.ptr;
+                    case char:   val = (ulong)*(char*)a.ptr;
+                    case int:    val = (ulong)*(int*)a.ptr;
+                    case short:  val = (ulong)*(short*)a.ptr;
+                    case long:   val = (ulong)*(long*)a.ptr;
                     default:
                         write_impl('?');
                         continue;
                 }
                 print_hex_ulong_width(val, width, spec == 'X');
+            case 'f':
+                print_any_fixed2(a);
             case 's':
                 switch (a.type) {
                     case char[]:

@@ -21,14 +21,36 @@ macro void draw_char(int x, int y, char c) => draw_char_impl(x, y, c);
 // Draw a char[] string at (x, y).
 macro void draw_string(int x, int y, char[] s) => draw_string_impl(x, y, s);
 
+// Draw scaled text using the built-in 5x7 font.
+macro void draw_char_scaled(int x, int y, char c, int scale) => draw_char_scaled_impl(x, y, c, scale);
+macro void draw_string_scaled(int x, int y, char[] s, int scale) => draw_string_scaled_impl(x, y, s, scale);
+
+// Cursor-style text API.
+macro void set_cursor(int x, int y) => set_cursor_impl(x, y);
+macro void set_text_scale(int scale) => set_text_scale_impl(scale);
+macro void print(char[] s) => print_impl(s);
+
 // Draw a horizontal line.
 macro void draw_hline(int x, int y, int w) => draw_hline_impl(x, y, w);
 
 // Draw a vertical line.
 macro void draw_vline(int x, int y, int h) => draw_vline_impl(x, y, h);
 
+// Draw an arbitrary line.
+macro void draw_line(int x0, int y0, int x1, int y1) => draw_line_impl(x0, y0, x1, y1);
+
 // Draw a rectangle outline.
 macro void draw_rect(int x, int y, int w, int h) => draw_rect_impl(x, y, w, h);
 
 // Fill a rectangle.
 macro void fill_rect(int x, int y, int w, int h) => fill_rect_impl(x, y, w, h);
+
+// Draw/fill circles.
+macro void draw_circle(int x, int y, int r) => draw_circle_impl(x, y, r);
+macro void fill_circle(int x, int y, int r) => fill_circle_impl(x, y, r);
+
+// Draw a 1-bit bitmap. Rows are MSB-first, padded to whole bytes.
+macro void draw_bitmap(int x, int y, char[] bitmap, int w, int h) => draw_bitmap_impl(x, y, bitmap, w, h);
+
+// Invert or restore the OLED display output.
+macro void invert(bool enabled) => invert_impl(enabled);

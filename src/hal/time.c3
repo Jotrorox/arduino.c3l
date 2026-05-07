@@ -72,16 +72,19 @@ fn uint micros_impl() {
     reg_write(SREG, old_sreg);
 
     // 64 / clockCyclesPerMicrosecond() == 4 at 16 MHz.
-    return ((m << 8) + (uint)t) * 4;
+    return ((m << 8) + (uint)t) << 2;
 }
 
 fn void delay_ms_impl(uint ms) {
-    uint start = micros_impl();
+    // Simple calibrated-ish busy wait. This avoids compiler-emitted helper calls
+    // that can exceed AVR RCALL range in larger no-libc programs.
     while (ms > 0) {
-        while (ms > 0 && (micros_impl() - start) >= 1000) {
-            ms--;
-            start += 1000;
+        uint loops = 500;
+        while (loops > 0) {
+            asm("nop");
+            loops--;
         }
+        ms--;
     }
 }
 

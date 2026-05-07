@@ -1,9 +1,5 @@
 module arduino::i2c;
 
-// Initialise the TWI peripheral as an I2C master at 100 kHz (16 MHz CPU).
-// Also clears the internal transmit / receive buffers.
-macro void begin() => begin_impl();
-
 // Start building a write transaction for the given 7-bit slave address.
 macro void begin_transmission(char addr) => begin_transmission_impl(addr);
 

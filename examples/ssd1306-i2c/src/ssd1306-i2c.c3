@@ -5,8 +5,6 @@ import arduino::i2c;
 import arduino::driver::output::ssd1306;
 
 fn void main() @export("start") {
-    i2c::begin();
-
     // Initialise 128x64 OLED at I2C address 0x3C
     if (!ssd1306::init(0x3C, 64)) {
         while (true) {}
