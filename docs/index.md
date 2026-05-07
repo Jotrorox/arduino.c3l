@@ -12,6 +12,7 @@ This library currently requires a recent nightly C3 compiler.
 - Time: `delay_ms`, `delay_us`, `millis`, and `micros`.
 - ADC: read analog inputs A0-A5.
 - PWM: write 8-bit duty cycles on supported PWM pins.
+- Servo: simple hobby servo control on D9/D10.
 - UART: serial input/output helpers.
 - I2C: master transmit/receive helpers.
 - Interrupts: external interrupt attach/detach helpers.

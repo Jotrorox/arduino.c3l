@@ -1,0 +1,40 @@
+module arduino::driver::motor::servo;
+
+<*
+ Servo-capable pins on ATmega328P / Arduino Uno.
+ Uses Timer1, so this takes over normal PWM on D9 and D10.
+*>
+constdef ServoPin {
+	D9  = 9,
+	D10 = 10,
+}
+
+const ushort MIN_PULSE_US = 544;
+const ushort MAX_PULSE_US = 2400;
+const ushort DEFAULT_PULSE_US = 1500;
+
+<*
+ Enable servo output on D9 or D10 and move to the center position.
+ @param pin : `The servo pin to enable.`
+*>
+macro void attach(ServoPin pin) => attach_impl(pin);
+
+<*
+ Stop driving the servo pin.
+ @param pin : `The servo pin to disable.`
+*>
+macro void detach(ServoPin pin) => detach_impl(pin);
+
+<*
+ Move a servo by angle. Values are clamped to 0-180 degrees.
+ @param pin : `The servo pin to write.`
+ @param angle : `Servo angle in degrees.`
+*>
+macro void write_angle(ServoPin pin, int angle) => write_angle_impl(pin, angle);
+
+<*
+ Move a servo by pulse width. Values are clamped to MIN_PULSE_US-MAX_PULSE_US.
+ @param pin : `The servo pin to write.`
+ @param pulse_us : `Pulse width in microseconds.`
+*>
+macro void write_us(ServoPin pin, ushort pulse_us) => write_us_impl(pin, pulse_us);

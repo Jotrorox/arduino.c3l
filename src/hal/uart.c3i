@@ -43,13 +43,13 @@ macro usz read_line(char[] buf) => read_line_impl(buf);
  Print a value. Supports integers, bool, char, char[], String, and char*.
  @param x : `The value to print.`
 *>
-macro print(x) => print_impl{$typeof(x)}(x);
+macro print(x) => print_impl{$Typeof(x)}(x);
 
 <*
  Print a value followed by CR+LF.
  @param x : `The value to print.`
 *>
-macro printn(x) => printn_impl{$typeof(x)}(x);
+macro printn(x) => printn_impl{$Typeof(x)}(x);
 
 <*
  Standard C-style formatted output.

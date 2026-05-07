@@ -13,6 +13,7 @@ A small C3 library for Arduino/AVR projects, focused on ATmega328P boards such a
 - Timing (`delay_ms`, `delay_us`, `millis`, `micros`)
 - ADC (`analog_read`)
 - PWM (`analog_write`)
+- Servo motor driver (`servo::attach`, `servo::write_angle`, `servo::write_us`)
 - UART, I2C, interrupts, and a small SSD1306 I2C driver
 - Minimal AVR startup/runtime code
 
