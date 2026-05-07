@@ -21,5 +21,5 @@ macro @volatile_load(#x) @builtin
 *>
 macro @volatile_store(#x, value) @builtin
 {
-	return $$volatile_store(&#x, ($typeof(#x))value);
+	return $$volatile_store(&#x, ($Typeof(#x))value);
 }
