@@ -1,10 +1,6 @@
 # arduino.c3l
 
 A small C3 library for Arduino/AVR projects, focused on ATmega328P boards such as the Arduino Uno.
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/jotrorox/arduino.c3l/graphs/commit-activity)
-[![GitHub license](https://img.shields.io/github/license/jotrorox/arduino.c3l.svg)](https://github.com/jotrorox/arduino.c3l/blob/master/LICENSE)
-[![GitHub commits](https://badgen.net/github/commits/jotrorox/arduino.c3l)](https://GitHub.com/jotrorox/arduino.c3l/commit/)
-[![GitHub stars](https://badgen.net/github/stars/jotrorox/arduino.c3l)](https://GitHub.com/jotrorox/arduino.c3l/stargazers/)
 
 
 ## Features
@@ -14,7 +10,7 @@ A small C3 library for Arduino/AVR projects, focused on ATmega328P boards such a
 - ADC (`analog_read`)
 - PWM (`analog_write`)
 - Servo motor driver (`servo::attach`, `servo::write_angle`, `servo::write_us`)
-- UART, I2C, interrupts, and a small SSD1306 I2C driver
+- UART, I2C, interrupts, SSD1306 OLED, and LCD1602 I2C display drivers
 - Minimal AVR startup/runtime code
 
 ## Example

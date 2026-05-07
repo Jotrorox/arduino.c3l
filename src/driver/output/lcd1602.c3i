@@ -1,0 +1,37 @@
+module arduino::driver::output::lcd1602;
+
+<*
+ Initializes an HD44780-compatible 16x2 LCD connected through a PCF8574 I2C backpack.
+ @param addr : `The 7-bit I2C address of the backpack (commonly 0x27 or 0x3F).`
+ @param cols : `Number of columns, normally 16.`
+ @param rows : `Number of rows, normally 2.`
+ @return `true if the I2C backpack acknowledged, false otherwise.`
+ @require addr <= 0x7F : "I2C address must be a 7-bit value (0-127)."
+ @require cols > 0 && rows > 0 : "LCD dimensions must be positive."
+*>
+macro bool init(char addr, char cols, char rows) => init_impl(addr, cols, rows);
+
+<* Clear the display and move the cursor to 0,0. *>
+macro void clear() => clear_impl();
+
+<* Move the cursor to 0,0 without clearing the display. *>
+macro void home() => home_impl();
+
+<*
+ Set the text cursor position.
+ @param col : `Zero-based column.`
+ @param row : `Zero-based row.`
+*>
+macro void set_cursor(char col, char row) => set_cursor_impl(col, row);
+
+<* Write one character at the current cursor position. *>
+macro void write_char(char c) => write_char_impl(c);
+
+<* Print a string at the current cursor position. *>
+macro void print(char[] s) => print_impl(s);
+
+<* Turn the LCD backlight on or off. *>
+macro void backlight(bool enabled) => backlight_impl(enabled);
+
+<* Turn visible display output on or off without clearing DDRAM. *>
+macro void display(bool enabled) => display_impl(enabled);

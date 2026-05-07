@@ -36,6 +36,7 @@ export default defineConfig({
             text: 'Drivers',
             items: [
               { text: 'SSD1306 OLED', link: '/api/drivers/ssd1306' },
+              { text: 'LCD1602 I2C', link: '/api/drivers/lcd1602' },
               { text: 'Servo', link: '/api/drivers/servo' }
             ]
           }

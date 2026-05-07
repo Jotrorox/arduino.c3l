@@ -22,7 +22,9 @@ jobs:
           - examples/hello-uart
           - examples/i2c-scanner
           - examples/interrupt-button
+          - examples/lcd1602-i2c
           - examples/pot-fade
+          - examples/servo
           - examples/ssd1306-i2c
 
     steps:
