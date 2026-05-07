@@ -115,47 +115,37 @@ fn void begin_impl(uint baud) {
 
     reg_write(UCSR0C_REG, UCSZ0_8BIT);
 
-    reg_write(UCSR0B_REG, (char)(RXEN0 | TXEN0));
+    reg_write(UCSR0B_REG, (char)(RXCIE0 | RXEN0 | TXEN0));
     asm("sei");
 
     initialized = true;
 }
 
-fn void write_impl(char c) {
+fn void tx_char(char c) {
     if (!initialized) begin_impl(9600);
     while ((reg_read(UCSR0A_REG) & UDRE0) == 0) {}
     reg_write(UDR0_REG, c);
 }
 
-fn void write_string_impl(char[] s) {
+fn void tx_string(char[] s) {
     if (!initialized) begin_impl(9600);
     for (usz i = 0; i < s.len; i++) {
-        write_impl(s[i]);
+        tx_char(s[i]);
     }
 }
 
-fn void write_zstring_impl(char* s) {
+fn void tx_zstring(char* s) {
     if (!initialized) begin_impl(9600);
     char* p = s;
     while (*p != 0) {
-        write_impl(*p);
+        tx_char(*p);
         p++;
     }
 }
 
-fn void write_crlf_impl() {
-    write_impl('\r');
-    write_impl('\n');
-}
-
-fn void write_line_impl(char[] s) {
-    write_string_impl(s);
-    write_crlf_impl();
-}
-
-fn void write_line_zstring_impl(char* s) {
-    write_zstring_impl(s);
-    write_crlf_impl();
+fn void tx_crlf() {
+    tx_char('\r');
+    tx_char('\n');
 }
 
 fn bool can_read_impl() {
@@ -234,7 +224,7 @@ fn usz read_line_impl(char[] buf) {
 
 fn void print_ulong(ulong value) {
     if (value == 0) {
-        write_impl('0');
+        tx_char('0');
         return;
     }
     bool started = false;
@@ -250,7 +240,7 @@ fn void print_ulong(ulong value) {
             digit++;
         }
         if (digit > 0 || started || i == 9) {
-            write_impl((char)(digit + '0'));
+            tx_char((char)(digit + '0'));
             started = true;
         }
     }
@@ -258,11 +248,11 @@ fn void print_ulong(ulong value) {
 
 fn void print_long(long value) {
     if (value == 0) {
-        write_impl('0');
+        tx_char('0');
         return;
     }
     if (value < 0) {
-        write_impl('-');
+        tx_char('-');
         value = -value;
     }
     print_ulong((ulong)value);
@@ -284,7 +274,7 @@ fn int ulong_digits(ulong value) {
 fn void print_ulong_width(ulong value, int width, char pad) {
     int digits = ulong_digits(value);
     for (int p = digits; p < width; p++) {
-        write_impl(pad);
+        tx_char(pad);
     }
     print_ulong(value);
 }
@@ -295,11 +285,11 @@ fn void print_long_width(long value, int width, char pad) {
         int digits = ulong_digits((ulong)value);
         int total = digits + 1;
         if (pad == '0') {
-            write_impl('-');
-            for (int p = total; p < width; p++) write_impl('0');
+            tx_char('-');
+            for (int p = total; p < width; p++) tx_char('0');
         } else {
-            for (int p = total; p < width; p++) write_impl(' ');
-            write_impl('-');
+            for (int p = total; p < width; p++) tx_char(' ');
+            tx_char('-');
         }
         print_ulong((ulong)value);
     } else {
@@ -322,10 +312,10 @@ fn void print_hex_ulong_width(ulong value, int width, bool upper) {
     char[] hex = upper ? "0123456789ABCDEF" : "0123456789abcdef";
     int digits = ulong_hex_digits(value);
     for (int p = digits; p < width; p++) {
-        write_impl('0');
+        tx_char('0');
     }
     if (value == 0) {
-        write_impl('0');
+        tx_char('0');
         return;
     }
     char[16] buf;
@@ -335,7 +325,7 @@ fn void print_hex_ulong_width(ulong value, int width, bool upper) {
         value >>= 4;
     }
     for (int j = len - 1; j >= 0; j--) {
-        write_impl(buf[j]);
+        tx_char(buf[j]);
     }
 }
 
@@ -359,26 +349,26 @@ fn void print_impl(Type value) <Type> {
                             print_ulong(value);
                         $else
                             $if (Type == char):
-                                write_impl(value);
+                                tx_char(value);
                             $else
                                 $if (Type == ichar):
                                     print_long((long)value);
                                 $else
                                     $if (Type == bool):
                                         if (value) {
-                                            write_string_impl("true");
+                                            tx_string("true");
                                         } else {
-                                            write_string_impl("false");
+                                            tx_string("false");
                                         }
                                     $else
                                         $if (Type == char[]):
-                                            write_string_impl(value);
+                                            tx_string(value);
                                         $else
                                             $if (Type == String):
-                                                write_string_impl(value);
+                                                tx_string(value);
                                             $else
                                                 $if (Type == char*):
-                                                    write_zstring_impl(value);
+                                                    tx_zstring(value);
                                                 $else
                                                     $error("Unsupported type for print");
                                                 $endif
@@ -395,9 +385,9 @@ fn void print_impl(Type value) <Type> {
 $endif
 }
 
-fn void println_impl(Type value) <Type> {
+fn void printn_impl(Type value) <Type> {
     print_impl(value);
-    write_crlf_impl();
+    tx_crlf();
 }
 
 fn void print_any_signed(any a) {
@@ -408,7 +398,7 @@ fn void print_any_signed(any a) {
         case char:  print_ulong((ulong)*(char*)a.ptr);
         case ichar: print_long((long)*(ichar*)a.ptr);
         case bool:  print_long(*(bool*)a.ptr ? 1 : 0);
-        default:    write_impl('?');
+        default:    tx_char('?');
     }
 }
 
@@ -421,7 +411,7 @@ fn void print_any_unsigned(any a) {
         case int:    print_ulong((ulong)*(int*)a.ptr);
         case short:  print_ulong((ulong)*(short*)a.ptr);
         case long:   print_ulong((ulong)*(long*)a.ptr);
-        default:     write_impl('?');
+        default:     tx_char('?');
     }
 }
 
@@ -435,15 +425,15 @@ fn void print_any_fixed2(any a) {
         case char:  v = (int)*(char*)a.ptr;
         case ichar: v = (int)*(ichar*)a.ptr;
         default:
-            write_impl('?');
+            tx_char('?');
             return;
     }
     if (v < 0) {
-        write_impl('-');
+        tx_char('-');
         v = -v;
     }
     print_ulong((ulong)(v / 100));
-    write_impl('.');
+    tx_char('.');
     print_ulong_width((ulong)(v % 100), 2, '0');
 }
 
@@ -452,14 +442,14 @@ fn void printf_impl(char[] fmt, args...) {
     for (usz i = 0; i < fmt.len; i++) {
         char c = fmt[i];
         if (c != '%') {
-            write_impl(c);
+            tx_char(c);
             continue;
         }
         if (i + 1 >= fmt.len) break;
         i++;
 
         if (fmt[i] == '%') {
-            write_impl('%');
+            tx_char('%');
             continue;
         }
 
@@ -484,7 +474,7 @@ fn void printf_impl(char[] fmt, args...) {
 
         char spec = fmt[i];
         if (arg_idx >= args.len) {
-            write_impl('?');
+            tx_char('?');
             continue;
         }
         any a = args[arg_idx];
@@ -499,7 +489,7 @@ fn void printf_impl(char[] fmt, args...) {
                     case long:  print_long_width(*(long*)a.ptr, width, pad);
                     case char:  print_ulong_width((ulong)*(char*)a.ptr, width, pad);
                     case ichar: print_long_width((long)*(ichar*)a.ptr, width, pad);
-                    default:    write_impl('?');
+                    default:    tx_char('?');
                 }
             case 'u':
                 print_any_unsigned(a);
@@ -515,7 +505,7 @@ fn void printf_impl(char[] fmt, args...) {
                     case short:  val = (ulong)*(short*)a.ptr;
                     case long:   val = (ulong)*(long*)a.ptr;
                     default:
-                        write_impl('?');
+                        tx_char('?');
                         continue;
                 }
                 print_hex_ulong_width(val, width, spec == 'X');
@@ -525,27 +515,27 @@ fn void printf_impl(char[] fmt, args...) {
                 switch (a.type) {
                     case char[]:
                         char[]* p = (char[]*)a.ptr;
-                        write_string_impl(*p);
+                        tx_string(*p);
                     case char*:
                         char** p = (char**)a.ptr;
-                        write_zstring_impl(*p);
+                        tx_zstring(*p);
                     default:
-                        write_impl('?');
+                        tx_char('?');
                 }
             case 'c':
                 if (a.type == char) {
-                    write_impl(*(char*)a.ptr);
+                    tx_char(*(char*)a.ptr);
                 } else if (a.type == ichar) {
-                    write_impl((char)*(ichar*)a.ptr);
+                    tx_char((char)*(ichar*)a.ptr);
                 } else {
-                    write_impl('?');
+                    tx_char('?');
                 }
             case 'p':
-                write_impl('0');
-                write_impl('x');
+                tx_char('0');
+                tx_char('x');
                 print_hex_ulong_width((ulong)(uptr)a.ptr, width, true);
             default:
-                write_impl('?');
+                tx_char('?');
         }
     }
 }

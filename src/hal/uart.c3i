@@ -5,84 +5,35 @@ module arduino::uart;
 // Any other value falls back to 9600.
 macro void begin(uint baud) => begin_impl(baud);
 
-// Transmit a single byte.
-macro void write(char c) => write_impl(c);
-
-// Transmit a char[] slice. C3 string literals are char[], so this works:
-//   uart::write_string("hello");
-//   uart::write_string(my_slice[0..n-1]);
-macro void write_string(char[] s) => write_string_impl(s);
-
-// Transmit a null-terminated char* string.
-macro void write_zstring(char* s) => write_zstring_impl(s);
-
-// Transmit CR + LF.
-macro void write_crlf() => write_crlf_impl();
-
-// Transmit a char[] slice followed by CR + LF.
-macro void write_line(char[] s) => write_line_impl(s);
-
-// Transmit a null-terminated char* string followed by CR + LF.
-macro void write_line_zstring(char* s) => write_line_zstring_impl(s);
-
 // Returns true if at least one byte is waiting. Non-blocking.
 macro bool can_read() => can_read_impl();
 
 // Block until one byte arrives and return it.
 macro char read() => read_impl();
 
-// Non-blocking bulk read.
-// Drains whatever bytes are in the HW FIFO right now (up to buf.len).
-// Returns the number of bytes written into buf. 0 means nothing was waiting.
-// To use the result as a slice: buf[0..n-1]  (n > 0)
-//
-//   char[32] tmp;
-//   usz n = uart::read_buf(tmp);
-//   if (n > 0) uart::write_string(tmp[0..n-1]);
+// Non-blocking bulk read. Returns the number of bytes written into buf.
 macro usz read_buf(char[] buf) => read_buf_impl(buf);
 
-// Blocking bulk read.
-// Blocks until all buf.len bytes have been received.
-// Always returns buf.len.
-//
-//   char[4] hdr;
-//   uart::read_buf_exact(hdr); // hdr is fully populated on return
+// Blocking bulk read. Always returns buf.len.
 macro usz read_buf_exact(char[] buf) => read_buf_exact_impl(buf);
 
-// Blocking line read.
-// Reads characters until \n or \r\n is received, or buf is full.
-//   - The line terminator is consumed but NOT stored.
-//   - buf is always null-terminated (buf[n] = 0) so buf.ptr is safe
-//     to use as a char* / ZString.
-//   - buf.len must be >= 1 (one byte reserved for the null terminator).
-//   - Returns the number of data bytes written, excluding the '\0'.
-// To use the result as a slice: buf[0..n-1]  (n > 0)
-//
-//   char[64] line_buf;
-//   usz n = uart::read_line(line_buf);
-//   if (n > 0) uart::write_line(buf[0..n-1]);
+// Blocking line read. Consumes the terminator, stores a null-terminated line,
+// and returns the number of data bytes written (excluding the '\0').
 macro usz read_line(char[] buf) => read_line_impl(buf);
 
-// Convenience macro wrapping a generic implementation.
-// Supports all integer types, bool, char[], String, and char*.
-// Usage:
-//   uart::print(42);
-//   uart::print("hello");
+// Print a value. Supports integers, bool, char, char[], String, and char*.
 macro print(x) => print_impl{$typeof(x)}(x);
 
-// Print value followed by CR+LF.
-macro printn(x) => println_impl{$typeof(x)}(x);
+// Print a value followed by CR+LF.
+macro printn(x) => printn_impl{$typeof(x)}(x);
 
 // Standard C-style formatted output.
 // Supported specifiers: %% %d %i %u %x %X %s %c %p
 // Width and zero-padding are supported (e.g. %02d, %4x).
-// Usage:
-//   uart::printf("Temp: %d C\r\n", 23);
-//   uart::printf("Hex: 0x%02X\r\n", 0xAB);
 macro printf(fmt, args...) => printf_impl(fmt, ...args);
 
 // printf followed by CR+LF.
 macro printfn(fmt, args...) {
     printf_impl(fmt, ...args);
-    write_crlf_impl();
+    tx_crlf();
 }
