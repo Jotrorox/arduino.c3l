@@ -1,19 +1,25 @@
 module arduino::gpio;
 
-// Pin mode constants
+<*
+ Pin mode constants.
+*>
 constdef PinMode {
 	OUTPUT       = 1,
 	INPUT        = 0,
 	INPUT_PULLUP = 2,
 }
 
-// Level constants
+<*
+ Pin state constants.
+*>
 constdef PinState {
 	HIGH = 1,
 	LOW  = 0,
 }
 
-// Pin aliases
+<*
+ Pin aliases.
+*>
 constdef Pin {
 	D0  = 0,
 	D1  = 1,
@@ -37,8 +43,9 @@ constdef Pin {
 	A5 = 19,
 }
 
-// ADC channel aliases (distinct type for type-safe analog reads).
-// Values correspond directly to ADC channels 0-5.
+<*
+ AnalogPin aliases for type safety in ADC functions.
+*>
 constdef AnalogPin {
 	A0 = 0,
 	A1 = 1,
@@ -48,11 +55,26 @@ constdef AnalogPin {
 	A5 = 5,
 }
 
+<*
+ Set the mode of a GPIO pin.
+ @param pin : `The digital pin number (D0-D13).`
+ @param mode : `The mode to set (OUTPUT, INPUT, or INPUT_PULLUP).`
+*>
 macro void pin_mode(Pin pin, PinMode mode)
     => pin_mode_impl(pin, mode);
 
+<*
+ Write a HIGH or LOW value to a digital pin.
+ @param pin : `The digital pin number (D0-D13).`
+ @param value : `The value to write (HIGH or LOW).`
+*>
 macro void digital_write(Pin pin, PinState value)
     => digital_write_impl(pin, value);
 
+<*
+ Read the value of a digital pin.
+ @param pin : `The digital pin number (D0-D13).`
+ @return `The value read (HIGH or LOW).`
+*>
 macro PinState digital_read(Pin pin)
     => digital_read_impl(pin);

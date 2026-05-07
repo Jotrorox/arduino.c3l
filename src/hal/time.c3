@@ -76,15 +76,14 @@ fn uint micros_impl() {
 }
 
 fn void delay_ms_impl(uint ms) {
-    // Simple calibrated-ish busy wait. This avoids compiler-emitted helper calls
-    // that can exceed AVR RCALL range in larger no-libc programs.
+    if (ms == 0) return;
+
+    uint start = micros_impl();
     while (ms > 0) {
-        uint loops = 500;
-        while (loops > 0) {
-            asm("nop");
-            loops--;
+        if ((micros_impl() - start) >= 1000) {
+            ms--;
+            start += 1000;
         }
-        ms--;
     }
 }
 

@@ -1,7 +1,8 @@
 module arduino::pwm;
 
-// PWM-capable pins on ATmega328P / Arduino Uno.
-// Timer0 → D5, D6  |  Timer1 → D9, D10  |  Timer2 → D3, D11
+<*
+ Supported PWM pins on ATmega328P / Arduino Uno.
+*>
 constdef PWMPin {
 	D3  = 3,
 	D5  = 5,
@@ -11,10 +12,14 @@ constdef PWMPin {
 	D11 = 11,
 }
 
-const char MAX_DUTY = 0xFF;   // 255 = full on
-const char MIN_DUTY = 0x00;   // 0   = full off
+const char MAX_DUTY = 0xFF;
+const char MIN_DUTY = 0x00; 
 
-// Write an 8-bit PWM duty cycle (0-255) to a supported pin.
-// The pin is automatically configured as an output.
+<*
+ Set the duty cycle for a PWM pin.
+ @param pin : `The PWM pin to set.`
+ @param duty : `The duty cycle (0-255).`
+ @require 0 <= duty <= 255 : `Duty cycle must be between 0 and 255.`
+*>
 macro void analog_write(PWMPin pin, char duty) => analog_write_impl(pin, duty);
 

@@ -1,38 +1,69 @@
 module arduino::uart;
 
-// Initialise USART0 at the chosen baud rate.
-// Supported: 2400 / 4800 / 9600 / 14400 / 19200 / 28800 / 38400 / 57600 / 115200
-// Any other value falls back to 9600.
+<*
+ Initialise USART0 at the chosen baud rate.
+ @param baud : `The baud rate to initialise at.`
+ @require baud == 9600 || baud == 19200 || baud == 38400 || baud == 57600 || baud == 115200 : `Unsupported baud rate.` 
+ @return `True if the USART was initialised successfully, false otherwise.`
+*>
 macro void begin(uint baud) => begin_impl(baud);
 
-// Returns true if at least one byte is waiting. Non-blocking.
+<*
+ Returns true if at least one byte is waiting. Non-blocking.
+ @return `True if at least one byte is waiting, false otherwise.`
+*>
 macro bool can_read() => can_read_impl();
 
-// Block until one byte arrives and return it.
+<*
+ Block until one byte arrives and return it.
+ @return `The byte that was read.`
+*>
 macro char read() => read_impl();
 
-// Non-blocking bulk read. Returns the number of bytes written into buf.
+<*
+ Non-blocking bulk read. Returns the number of bytes written into buf.
+ @param buf : `The buffer to read into.`
+ @return `The number of bytes read.`
+*>
 macro usz read_buf(char[] buf) => read_buf_impl(buf);
 
-// Blocking bulk read. Always returns buf.len.
+<*
+ Blocking bulk read. Always returns buf.len.
+ @param buf : `The buffer to read into.`
+ @return `The number of bytes read.`
+*>
 macro usz read_buf_exact(char[] buf) => read_buf_exact_impl(buf);
 
-// Blocking line read. Consumes the terminator, stores a null-terminated line,
-// and returns the number of data bytes written (excluding the '\0').
+<*
+ Blocking line read. Consumes the terminator, stores a null-terminated line,
+ and returns the number of data bytes written (excluding the '\0').
+*>
 macro usz read_line(char[] buf) => read_line_impl(buf);
 
-// Print a value. Supports integers, bool, char, char[], String, and char*.
+<*
+ Print a value. Supports integers, bool, char, char[], String, and char*.
+ @param x : `The value to print.`
+*>
 macro print(x) => print_impl{$typeof(x)}(x);
 
-// Print a value followed by CR+LF.
+<*
+ Print a value followed by CR+LF.
+ @param x : `The value to print.`
+*>
 macro printn(x) => printn_impl{$typeof(x)}(x);
 
-// Standard C-style formatted output.
-// Supported specifiers: %% %d %i %u %x %X %s %c %p
-// Width and zero-padding are supported (e.g. %02d, %4x).
+<*
+ Standard C-style formatted output.
+ @param fmt : `The format string.`
+ @param args : `The arguments for the format string.`
+*>
 macro printf(fmt, args...) => printf_impl(fmt, ...args);
 
-// printf followed by CR+LF.
+<*
+ Standard C-style formatted output followed by CR+LF.
+ @param fmt : `The format string.`
+ @param args : `The arguments for the format string.`
+*>
 macro printfn(fmt, args...) {
     printf_impl(fmt, ...args);
     tx_crlf();

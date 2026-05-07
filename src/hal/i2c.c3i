@@ -1,30 +1,52 @@
 module arduino::i2c;
 
-// Start building a write transaction for the given 7-bit slave address.
+<*
+ Start building a write transaction for the given 7-bit slave address.
+ @param addr : `The 7-bit slave address.`
+*>
 macro void begin_transmission(char addr) => begin_transmission_impl(addr);
 
-// Queue a single byte into the transmit buffer.
+<*
+ Queue a single byte into the transmit buffer.
+ @param b : `The byte to queue.`
+*>
 macro void write_byte(char b) => write_impl(b);
 
-// Queue an entire slice into the transmit buffer.
+<*
+ Queue an entire slice into the transmit buffer.
+ @param data : `The slice of bytes to queue.`
+*>
 macro void write_bytes(char[] data) => write_bytes_impl(data);
 
-// Send START, slave address + W, queued bytes, and STOP.
-// Returns 0 on success, 2 if the slave NACKed its address,
-// 3 if the slave NACKed a data byte.
+<*
+ Send START, slave address + W, queued bytes, and STOP.
+ @return `0 on success, 2 if the slave NACKed its address, 3 if the slave NACKed a data byte.`
+*>
 macro char end_transmission() => end_transmission_impl();
 
-// Request `quantity` bytes from the given 7-bit slave address.
-// The bytes are stored in an internal buffer.
-// Returns the number of bytes actually read (may be 0 on error).
+<*
+ Request `quantity` bytes from the given 7-bit slave address.
+ @param addr : `The 7-bit slave address.`
+ @param quantity : `The number of bytes to request.`
+ @return `The number of bytes actually read (may be 0 on error).`
+*>
 macro char request_from(char addr, char quantity) => request_from_impl(addr, quantity);
 
-// Returns how many unread bytes remain in the receive buffer.
+<*
+ Returns how many unread bytes remain in the receive buffer.
+ @return `The number of unread bytes.`
+*>
 macro char available() => available_impl();
 
-// Read the next byte from the receive buffer. Returns 0 if empty.
+<*
+ Read the next byte from the receive buffer.
+ @return `The byte read (0 if the buffer is empty).`
+*>
 macro char read_byte() => read_byte_impl();
 
-// Quick bus check: send START + SLA+W and immediately STOP.
-// Returns true if the slave ACKed its address.
+<*
+ Scan the I2C bus for a device at the given address.
+ @param addr : `The 7-bit slave address.`
+ @return `True if a device is found at the address, false otherwise.`
+*>
 macro bool scan(char addr) => scan_impl(addr);

@@ -1,7 +1,31 @@
 module arduino::time;
 
+<*
+ Returns the number of milliseconds since the Arduino board began running the current program.
+ @return `The number of milliseconds since the program started.`
+*>
 macro uint millis() => millis_impl();
+
+<*
+ Returns the number of microseconds since the Arduino board began running the current program.
+ @return `The number of microseconds since the program started.`
+*>
 macro uint micros() => micros_impl();
+
+<*
+ Delay for a specified number of microseconds.
+ @param us : `The number of microseconds to delay.`
+*>
 macro void delay_us(uint us) => delay_us_impl(us);
+
+<*
+ Delay for a specified number of milliseconds.
+ @param ms : `The number of milliseconds to delay.`
+*>
 macro void delay_ms(uint ms) => delay_ms_impl(ms);
+
+<*
+ Delay for a specified number of milliseconds.
+ @param ms : `The number of milliseconds to delay.`
+*>
 macro void delay(uint ms) => delay_ms_impl(ms);
