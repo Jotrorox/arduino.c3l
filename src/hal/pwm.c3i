@@ -19,7 +19,6 @@ const char MIN_DUTY = 0x00;
  Set the duty cycle for a PWM pin.
  @param pin : `The PWM pin to set.`
  @param duty : `The duty cycle (0-255).`
- @require 0 <= duty <= 255 : `Duty cycle must be between 0 and 255.`
 *>
 macro void analog_write(PWMPin pin, char duty) => analog_write_impl(pin, duty);
 

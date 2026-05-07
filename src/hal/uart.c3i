@@ -3,7 +3,6 @@ module arduino::uart;
 <*
  Initialise USART0 at the chosen baud rate.
  @param baud : `The baud rate to initialise at.`
- @require baud == 9600 || baud == 19200 || baud == 38400 || baud == 57600 || baud == 115200 : `Unsupported baud rate.` 
  @return `True if the USART was initialised successfully, false otherwise.`
 *>
 macro void begin(uint baud) => begin_impl(baud);

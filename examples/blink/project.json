@@ -1,0 +1,25 @@
+{
+  "langrev": "1",
+  "authors": [ "Johannes (jotrorox) Müller" ],
+  "version": "0.1.0",
+  "warnings": [ "no-unused" ],
+  "dependency-search-paths": [ "../../.." ],
+  "dependencies": [ "arduino" ],
+  "sources": [ "src/**" ],
+  "build-dir": "build",
+  "output": "build",
+  "opt": "Oz",
+  "cpu": "atmega328p",
+  "targets": {
+    "blink": {
+      "type": "executable",
+      "name": "blink",
+      "extension": ".elf",
+      "target": "elf-avr",
+      "linker": "builtin",
+      "use-stdlib": false,
+      "link-libc": false,
+      "no-entry": true
+    }
+  }
+}
