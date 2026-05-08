@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  // GitHub Pages serves this project at https://jotrorox.github.io/arduino.c3l/
+  base: '/arduino.c3l/',
   title: 'arduino.c3l',
   description: 'C3 library for Arduino/AVR projects, focused on ATmega328P boards.',
   cleanUrls: true,
@@ -37,7 +39,8 @@ export default defineConfig({
             items: [
               { text: 'SSD1306 OLED', link: '/api/drivers/ssd1306' },
               { text: 'LCD1602 I2C', link: '/api/drivers/lcd1602' },
-              { text: 'Servo', link: '/api/drivers/servo' }
+              { text: 'Servo', link: '/api/drivers/servo' },
+              { text: 'HC-40 Ultrasonic', link: '/api/drivers/hc40' }
             ]
           }
         ]
