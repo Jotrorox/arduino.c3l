@@ -10,6 +10,12 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'API', link: '/api/gpio' },
+      {
+        text: 'Generated API',
+        link: 'https://jotrorox.github.io/arduino.c3l/docs.html',
+        target: '_blank',
+        rel: 'noopener noreferrer'
+      },
       { text: 'GitHub', link: 'https://github.com/jotrorox/arduino.c3l' }
     ],
 
@@ -40,9 +46,14 @@ export default defineConfig({
               { text: 'SSD1306 OLED', link: '/api/drivers/ssd1306' },
               { text: 'LCD1602 I2C', link: '/api/drivers/lcd1602' },
               { text: 'Servo', link: '/api/drivers/servo' },
-              { text: 'HC-40 Ultrasonic', link: '/api/drivers/hc40' }
             ]
-          }
+          },
+          {
+            text: 'Generated API',
+            link: 'https://jotrorox.github.io/arduino.c3l/docs.html',
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          },
         ]
       },
     ],

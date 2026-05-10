@@ -3,6 +3,9 @@ name: Build C3 examples
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
 
 permissions:
   contents: read

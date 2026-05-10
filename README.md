@@ -41,8 +41,8 @@ This project is minimal and experimental. APIs may change.
 
 
 If there are at any time problems with this library, 
-feel free to open an issue of if you need help with something feel free to message me,
-either through discord(@jotrorox) or matrix(@jotrorox:matrix.org).
+feel free to open an issue or if you need help with something feel free to message me.
+Please do so either through discord(@jotrorox) or matrix(@jotrorox:matrix.org).
 
 ## License
 
