@@ -30,50 +30,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v6
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
-      - name: Download latest C3 nightly
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          mkdir -p "$RUNNER_TEMP/c3"
-
-          tag="$(
-            gh api repos/c3lang/c3c/releases \
-              --jq '[.[] | select(.prerelease == true and .draft == false)][0].tag_name'
-          )"
-
-          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
-            echo "No C3 prerelease/nightly release found." >&2
-            exit 1
-          fi
-
-          echo "Using C3 nightly/prerelease: $tag"
-
-          gh release download "$tag" \
-            --repo c3lang/c3c \
-            --pattern 'c3-linux-static.tar.gz' \
-            --dir "$RUNNER_TEMP/c3"
-
-          tar -xzf "$RUNNER_TEMP/c3/c3-linux-static.tar.gz" -C "$RUNNER_TEMP/c3"
-
-          c3c_path="$(find "$RUNNER_TEMP/c3" -type f -name c3c | head -n 1)"
-
-          if [ -z "$c3c_path" ]; then
-            echo "Could not find c3c in downloaded archive." >&2
-            find "$RUNNER_TEMP/c3" -maxdepth 4 -type f
-            exit 1
-          fi
-
-          chmod +x "$c3c_path"
-
-          c3c_dir="$(dirname "$c3c_path")"
-          echo "$c3c_dir" >> "$GITHUB_PATH"
+      - name: Setup C3
+        uses: jotrorox/setup-c3@v1
 
       - name: Generate C3 API docs
         run: |
@@ -84,9 +46,9 @@ jobs:
           mv docs.html docs/public/docs.html
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -96,7 +58,7 @@ jobs:
         run: npm run docs:build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/.vitepress/dist
 
@@ -111,4 +73,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
