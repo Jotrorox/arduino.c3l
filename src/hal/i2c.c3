@@ -28,8 +28,9 @@ const char STATUS_SLA_R_NACK = 0x48;
 const char STATUS_RX_ACK     = 0x50;
 const char STATUS_RX_NACK    = 0x58;
 
-// Buffers
-const char BUF_SIZE = 32;
+// Buffers. Keep the default small for ATmega328P SRAM; increase this if an
+// application needs larger I2C transfers.
+const char BUF_SIZE = 16;
 char[BUF_SIZE] tx_buf;
 char[BUF_SIZE] rx_buf;
 char tx_len = 0;

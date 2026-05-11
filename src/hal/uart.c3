@@ -24,11 +24,13 @@ const char TXEN0  = 0x08;
 // UCSR0C bits
 const char UCSZ0_8BIT = 0x06; // 8N1
 
-const char RX_BUFFER_SIZE = 64;
+// Keep the default RX buffer small for ATmega328P SRAM. Increase this and
+// keep it a power of two if an application needs more buffered input.
+const char RX_BUFFER_SIZE = 16;
 const char RX_BUFFER_MASK = RX_BUFFER_SIZE - 1;
 
 bool initialized = false;
-char[64] rx_buffer;
+char[RX_BUFFER_SIZE] rx_buffer;
 char rx_head = 0;
 char rx_tail = 0;
 
@@ -115,8 +117,10 @@ fn void begin_impl(uint baud) {
 
     reg_write(UCSR0C_REG, UCSZ0_8BIT);
 
-    reg_write(UCSR0B_REG, (char)(RXCIE0 | RXEN0 | TXEN0));
-    asm("sei");
+    // RX is polled by read/can_read. Avoid enabling the RX interrupt by
+    // default because its vector would otherwise be retained in every UART
+    // program and the ring buffer is only needed when the API polls it.
+    reg_write(UCSR0B_REG, (char)(RXEN0 | TXEN0));
 
     initialized = true;
 }
@@ -540,46 +544,3 @@ fn void printf_impl(char[] fmt, args...) {
     }
 }
 
-fn void usart_rx_impl() @export("usart_rx_impl") {
-    rx_store(reg_read(UDR0_REG));
-}
-
-fn void __vector_18() @naked @export("__vector_18") {
-    // USART RX complete. Save the same call-clobbered register set used by
-    // the Timer0 ISR wrapper, then return with RETI.
-    asm("push r0");
-    asm("in r0, 0x3f");
-    asm("push r0");
-    asm("push r1");
-    asm("eor r1, r1");
-    asm("push r18");
-    asm("push r19");
-    asm("push r20");
-    asm("push r21");
-    asm("push r22");
-    asm("push r23");
-    asm("push r24");
-    asm("push r25");
-    asm("push r26");
-    asm("push r27");
-    asm("push r30");
-    asm("push r31");
-    asm("rcall usart_rx_impl");
-    asm("pop r31");
-    asm("pop r30");
-    asm("pop r27");
-    asm("pop r26");
-    asm("pop r25");
-    asm("pop r24");
-    asm("pop r23");
-    asm("pop r22");
-    asm("pop r21");
-    asm("pop r20");
-    asm("pop r19");
-    asm("pop r18");
-    asm("pop r1");
-    asm("pop r0");
-    asm("out 0x3f, r0");
-    asm("pop r0");
-    asm("reti");
-}
