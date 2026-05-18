@@ -25,6 +25,13 @@ const char SSD1306_DISPLAYON          = 0xAF;
 const char SSD1306_COLUMNADDR         = 0x21;
 const char SSD1306_PAGEADDR           = 0x22;
 
+const char OLED_WIDTH = 128;
+const char I2C_TX_BUF_SIZE = 16;
+const char OLED_DATA_CHUNK = I2C_TX_BUF_SIZE - 1;
+
+const char SSD1306_CONTROLLER = 0;
+const char SSD1309_CONTROLLER = 1;
+
 char device_addr;
 char display_width  = 128;
 char display_height = 64;
@@ -144,24 +151,53 @@ fn void send_cmd(char cmd) {
     i2c::end_transmission();
 }
 
+fn void set_address_window() {
+    send_cmd(SSD1306_COLUMNADDR);
+    send_cmd(0x00);
+    send_cmd((char)(display_width - 1));
+
+    send_cmd(SSD1306_PAGEADDR);
+    send_cmd(0x00);
+    send_cmd((char)(display_height / 8 - 1));
+}
+
 fn int buf_size() {
     return (int)display_width * ((int)display_height / 8);
 }
 
+fn char normalize_addr(char addr) {
+    if (addr == 0x78 || addr == 0x7A) {
+        return (char)(addr >> 1);
+    }
+    return addr;
+}
+
 fn bool init_impl(char addr, char height) {
-    device_addr   = addr;
+    return init_controller_impl(addr, height, SSD1306_CONTROLLER);
+}
+
+fn bool init_ssd1309_impl(char addr, char height) {
+    return init_controller_impl(addr, height, SSD1309_CONTROLLER);
+}
+
+fn bool init_controller_impl(char addr, char height, char controller) {
+    device_addr   = normalize_addr(addr);
     display_height = height;
-    display_width  = 128;
+    display_width  = OLED_WIDTH;
 
     clear_impl();
 
-    // Minimal init sequence
     send_cmd(SSD1306_DISPLAYOFF);
     send_cmd(SSD1306_SETDISPLAYCLOCKDIV); send_cmd(0x80);
     send_cmd(SSD1306_SETMULTIPLEX);       send_cmd((char)(height - 1));
     send_cmd(SSD1306_SETDISPLAYOFFSET);   send_cmd(0x00);
     send_cmd(SSD1306_SETSTARTLINE | 0x00);
-    send_cmd(SSD1306_CHARGEPUMP);         send_cmd(0x14);
+    send_cmd(SSD1306_CHARGEPUMP);
+    if (controller == SSD1309_CONTROLLER) {
+        send_cmd(0x10);
+    } else {
+        send_cmd(0x14);
+    }
     send_cmd(SSD1306_MEMORYMODE);         send_cmd(0x00); // horizontal
     send_cmd(SSD1306_SEGREMAP | 0x01);
     send_cmd(SSD1306_COMSCANDEC);
@@ -171,11 +207,29 @@ fn bool init_impl(char addr, char height) {
     } else {
         send_cmd(0x12);
     }
-    send_cmd(SSD1306_SETCONTRAST);        send_cmd(0xCF);
-    send_cmd(SSD1306_SETPRECHARGE);       send_cmd(0xF1);
-    send_cmd(SSD1306_SETVCOMDETECT);      send_cmd(0x40);
+    send_cmd(SSD1306_SETCONTRAST);
+    if (controller == SSD1309_CONTROLLER) {
+        send_cmd(0x7F);
+    } else {
+        send_cmd(0xCF);
+    }
+    send_cmd(SSD1306_SETPRECHARGE);
+    if (controller == SSD1309_CONTROLLER) {
+        send_cmd(0x22);
+    } else {
+        send_cmd(0xF1);
+    }
+    send_cmd(SSD1306_SETVCOMDETECT);
+    if (controller == SSD1309_CONTROLLER) {
+        send_cmd(0x34);
+    } else {
+        send_cmd(0x40);
+    }
     send_cmd(SSD1306_DISPLAYALLON_RESUME);
     send_cmd(SSD1306_NORMALDISPLAY);
+    set_address_window();
+    clear_impl();
+    display_impl();
     send_cmd(SSD1306_DISPLAYON);
 
     return true;
@@ -189,29 +243,29 @@ fn void clear_impl() {
 }
 
 fn void display_impl() {
-    // Set full-screen address window
-    send_cmd(SSD1306_COLUMNADDR);
-    send_cmd(0x00);
-    send_cmd(0x7F); // 127
+    int pages = display_height / 8;
 
-    send_cmd(SSD1306_PAGEADDR);
-    send_cmd(0x00);
-    send_cmd((char)(display_height / 8 - 1));
+    for (int page = 0; page < pages; page++) {
+        send_cmd(SSD1306_COLUMNADDR);
+        send_cmd(0x00);
+        send_cmd((char)(display_width - 1));
 
-    // Blast framebuffer in I2C-sized chunks (31 data bytes + 1 control byte = 32)
-    int bsize = buf_size();
-    int chunk = 31;
+        send_cmd(SSD1306_PAGEADDR);
+        send_cmd((char)page);
+        send_cmd((char)page);
 
-    for (int i = 0; i < bsize; i += chunk) {
-        int remaining = bsize - i;
-        if (remaining > chunk) remaining = chunk;
+        int page_offset = page * (int)display_width;
+        for (int x = 0; x < display_width; x += OLED_DATA_CHUNK) {
+            int remaining = (int)display_width - x;
+            if (remaining > OLED_DATA_CHUNK) remaining = OLED_DATA_CHUNK;
 
-        i2c::begin_transmission(device_addr);
-        i2c::write_byte(SSD1306_DATA);
-        for (int j = 0; j < remaining; j++) {
-            i2c::write_byte(framebuffer[i + j]);
+            i2c::begin_transmission(device_addr);
+            i2c::write_byte(SSD1306_DATA);
+            for (int i = 0; i < remaining; i++) {
+                i2c::write_byte(framebuffer[page_offset + x + i]);
+            }
+            i2c::end_transmission();
         }
-        i2c::end_transmission();
     }
 }
 

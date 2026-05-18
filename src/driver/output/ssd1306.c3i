@@ -2,12 +2,21 @@ module arduino::driver::output::ssd1306;
 
 <*
  Initializes the SSD1306 OLED display over I2C.
- @param addr : `The 7-bit I2C address of the display (commonly 0x3C or 0x3D).`
+ @param addr : `The 7-bit I2C address of the display (commonly 0x3C or 0x3D). Shifted OLED write addresses 0x78 and 0x7A are also accepted.`
  @param height : `The height of the display in pixels (32 or 64).`
  @require height == 32 || height == 64 : "Height must be 32 or 64 pixels."
  @require addr <= 0x7F : "I2C address must be a 7-bit value (0-127)."
 *>
 macro bool init(char addr, char height) => init_impl(addr, height);
+
+<*
+ Initializes an SSD1309 OLED display over I2C using the same framebuffer API.
+ @param addr : `The 7-bit I2C address of the display (commonly 0x3C or 0x3D). Shifted OLED write addresses 0x78 and 0x7A are also accepted.`
+ @param height : `The height of the display in pixels (32 or 64).`
+ @require height == 32 || height == 64 : "Height must be 32 or 64 pixels."
+ @require addr <= 0x7F : "I2C address must be a 7-bit value (0-127)."
+*>
+macro bool init_ssd1309(char addr, char height) => init_ssd1309_impl(addr, height);
 
 <*
  Clear the internal framebuffer (does not update the display).
