@@ -26,23 +26,28 @@ const char SSD1306_COLUMNADDR         = 0x21;
 const char SSD1306_PAGEADDR           = 0x22;
 
 const char OLED_WIDTH = 128;
+const char OLED_MAX_HEIGHT = 64;
+const char OLED_PAGE_HEIGHT = 8;
+const int OLED_MAX_PAGES = (int)OLED_MAX_HEIGHT / (int)OLED_PAGE_HEIGHT;
+const int OLED_FRAMEBUFFER_BYTES = (int)OLED_WIDTH * OLED_MAX_PAGES;
 const char I2C_TX_BUF_SIZE = 16;
 const char OLED_DATA_CHUNK = I2C_TX_BUF_SIZE - 1;
 
 char device_addr;
-char display_width  = 128;
-char display_height = 64;
+char display_width  = OLED_WIDTH;
+char display_height = OLED_MAX_HEIGHT;
 int cursor_x = 0;
 int cursor_y = 0;
 int text_scale = 1;
-char[1024] framebuffer;
 
-// Font (ASCII 32-127, 5×7)
+char[OLED_FRAMEBUFFER_BYTES] framebuffer_bits;
+
 const char FONT_CHARS   = 96;
 const char FONT_WIDTH   = 5;
 const char FONT_HEIGHT  = 7;
+const int FONT_BYTES = (int)FONT_CHARS * (int)FONT_WIDTH;
 
-char[480] font5x7 = {
+const char[FONT_BYTES] FONT5X7 @export("ssd1306_font5x7") @section(".text") = {
     0x00, 0x00, 0x00, 0x00, 0x00, // space
     0x00, 0x00, 0x5F, 0x00, 0x00, // !
     0x00, 0x07, 0x00, 0x07, 0x00, // "
@@ -141,6 +146,25 @@ char[480] font5x7 = {
     0x08, 0x1C, 0x2A, 0x08, 0x08  // DEL
 };
 
+ushort font_read_index @export("ssd1306_font_read_index");
+
+fn char font5x7_read_flash() @naked @noinline {
+    asm("lds r24, ssd1306_font_read_index");
+    asm("lds r25, ssd1306_font_read_index+1");
+    asm("ldi r30, lo8(ssd1306_font5x7)");
+    asm("ldi r31, hi8(ssd1306_font5x7)");
+    asm("add r30, r24");
+    asm("adc r31, r25");
+    asm("lpm");
+    asm("mov r24, r0");
+    asm("ret");
+}
+
+fn char font5x7_read(ushort idx) {
+    font_read_index = idx;
+    return font5x7_read_flash();
+}
+
 fn void send_cmd(char cmd) {
     i2c::begin_transmission(device_addr);
     i2c::write_byte(SSD1306_CMD);
@@ -158,8 +182,20 @@ fn void set_address_window() {
     send_cmd((char)(display_height / 8 - 1));
 }
 
-fn int buf_size() {
-    return (int)display_width * ((int)display_height / 8);
+fn int page_count() {
+    return (int)display_height / (int)OLED_PAGE_HEIGHT;
+}
+
+fn int framebuffer_len() {
+    return (int)display_width * page_count();
+}
+
+fn int framebuffer_index(int x, int y) {
+    return x + (y / (int)OLED_PAGE_HEIGHT) * (int)display_width;
+}
+
+fn char framebuffer_bit(int y) {
+    return (char)(1 << (char)(y % (int)OLED_PAGE_HEIGHT));
 }
 
 fn char normalize_addr(char addr) {
@@ -212,14 +248,14 @@ fn bool init_impl(char addr, char height) {
 }
 
 fn void clear_impl() {
-    int bsize = buf_size();
-    for (int i = 0; i < bsize; i++) {
-        framebuffer[i] = 0;
+    int len = framebuffer_len();
+    for (int i = 0; i < len; i++) {
+        framebuffer_bits[i] = 0;
     }
 }
 
 fn void display_impl() {
-    int pages = display_height / 8;
+    int pages = page_count();
 
     for (int page = 0; page < pages; page++) {
         send_cmd(SSD1306_COLUMNADDR);
@@ -238,7 +274,7 @@ fn void display_impl() {
             i2c::begin_transmission(device_addr);
             i2c::write_byte(SSD1306_DATA);
             for (int i = 0; i < remaining; i++) {
-                i2c::write_byte(framebuffer[page_offset + x + i]);
+                i2c::write_byte(framebuffer_bits[page_offset + x + i]);
             }
             i2c::end_transmission();
         }
@@ -249,13 +285,13 @@ fn void draw_pixel_impl(int x, int y, bool color) {
     if (x < 0 || x >= display_width) return;
     if (y < 0 || y >= display_height) return;
 
-    int idx = x + (y / 8) * (int)display_width;
-    char bit = (char)(y % 8);
+    int idx = framebuffer_index(x, y);
+    char bit = framebuffer_bit(y);
 
     if (color) {
-        framebuffer[idx] |= (char)(1 << bit);
+        framebuffer_bits[idx] |= bit;
     } else {
-        framebuffer[idx] &= (char)~(1 << bit);
+        framebuffer_bits[idx] &= (char)~bit;
     }
 }
 
@@ -269,7 +305,7 @@ fn void draw_char_scaled_impl(int x, int y, char c, int scale) {
 
     int idx = (int)(c - 32) * FONT_WIDTH;
     for (int col = 0; col < FONT_WIDTH; col++) {
-        char line = font5x7[idx + col];
+        char line = font5x7_read((ushort)(idx + col));
         for (int row = 0; row < FONT_HEIGHT; row++) {
             if ((line & (char)(1 << row)) != 0) {
                 fill_rect_impl(x + col * scale, y + row * scale, scale, scale);
