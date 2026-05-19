@@ -2,8 +2,8 @@
 
 This page explains how the example projects are built and uploaded.
 
-::: warning Nightly C3 compiler required
-Use a recent nightly `c3c`. The current library and examples target AVR and may not build correctly with stable C3 releases.
+::: warning You need the newest C3 Compiler
+To use this library you need a version of the compiler that is newer or atleast 0.8.0, since that was the point that avr support was included in the default executable.
 :::
 
 ## Build an example

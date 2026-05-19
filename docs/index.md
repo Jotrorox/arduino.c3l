@@ -2,10 +2,6 @@
 
 `arduino.c3l` is a small C3 library for Arduino/AVR projects, focused on ATmega328P boards such as the Arduino Uno.
 
-::: warning Nightly C3 compiler required
-This library currently requires a recent nightly C3 compiler.
-:::
-
 ## What is included
 
 - GPIO: configure pins and read/write digital values.

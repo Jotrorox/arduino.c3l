@@ -29,9 +29,6 @@ const char OLED_WIDTH = 128;
 const char I2C_TX_BUF_SIZE = 16;
 const char OLED_DATA_CHUNK = I2C_TX_BUF_SIZE - 1;
 
-const char SSD1306_CONTROLLER = 0;
-const char SSD1309_CONTROLLER = 1;
-
 char device_addr;
 char display_width  = 128;
 char display_height = 64;
@@ -173,14 +170,6 @@ fn char normalize_addr(char addr) {
 }
 
 fn bool init_impl(char addr, char height) {
-    return init_controller_impl(addr, height, SSD1306_CONTROLLER);
-}
-
-fn bool init_ssd1309_impl(char addr, char height) {
-    return init_controller_impl(addr, height, SSD1309_CONTROLLER);
-}
-
-fn bool init_controller_impl(char addr, char height, char controller) {
     device_addr   = normalize_addr(addr);
     display_height = height;
     display_width  = OLED_WIDTH;
@@ -193,11 +182,7 @@ fn bool init_controller_impl(char addr, char height, char controller) {
     send_cmd(SSD1306_SETDISPLAYOFFSET);   send_cmd(0x00);
     send_cmd(SSD1306_SETSTARTLINE | 0x00);
     send_cmd(SSD1306_CHARGEPUMP);
-    if (controller == SSD1309_CONTROLLER) {
-        send_cmd(0x10);
-    } else {
-        send_cmd(0x14);
-    }
+    send_cmd(0x10);
     send_cmd(SSD1306_MEMORYMODE);         send_cmd(0x00); // horizontal
     send_cmd(SSD1306_SEGREMAP | 0x01);
     send_cmd(SSD1306_COMSCANDEC);
@@ -208,23 +193,14 @@ fn bool init_controller_impl(char addr, char height, char controller) {
         send_cmd(0x12);
     }
     send_cmd(SSD1306_SETCONTRAST);
-    if (controller == SSD1309_CONTROLLER) {
-        send_cmd(0x7F);
-    } else {
-        send_cmd(0xCF);
-    }
+    send_cmd(0x7F);
+    send_cmd(0xCF);
     send_cmd(SSD1306_SETPRECHARGE);
-    if (controller == SSD1309_CONTROLLER) {
-        send_cmd(0x22);
-    } else {
-        send_cmd(0xF1);
-    }
+    send_cmd(0x22);
+    send_cmd(0xF1);
     send_cmd(SSD1306_SETVCOMDETECT);
-    if (controller == SSD1309_CONTROLLER) {
-        send_cmd(0x34);
-    } else {
-        send_cmd(0x40);
-    }
+    send_cmd(0x34);
+    send_cmd(0x40);
     send_cmd(SSD1306_DISPLAYALLON_RESUME);
     send_cmd(SSD1306_NORMALDISPLAY);
     set_address_window();

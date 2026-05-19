@@ -4,9 +4,8 @@ This guide gets you from an empty checkout to building the included blink exampl
 
 ## Current compiler requirement
 
-::: warning Nightly C3 compiler required
-`arduino.c3l` currently needs a recent **nightly** C3 compiler. Stable releases do not
-yet have AVR support built in. So please go to the releases and select the nightly/pre-release.
+::: warning You need the newest C3 Compiler
+To use this library you need a version of the compiler that is newer or atleast 0.8.0, since that was the point that avr support was included in the default executable.
 :::
 
 Install or update to the latest nightly C3 compiler and make sure `c3c` is on your `PATH`:
