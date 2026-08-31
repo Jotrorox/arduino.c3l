@@ -6,15 +6,12 @@ module arduino::time @private;
 // Keeping time on Timer0 leaves Timer1 free for PWM on D9/D10.
 const uint TCCR0A = 0x44;
 const uint TCCR0B = 0x45;
-const uint TCNT0  = 0x46;
 const uint TIMSK0 = 0x6E;
-const uint TIFR0  = 0x35;
 const uint SREG   = 0x5F;
 
 const char WGM01_WGM00 = 0x03; // Fast PWM, TOP = 0xff
 const char CS00_CS01   = 0x03; // clk/64
 const char TOIE0_BIT   = 0x01;
-const char TOV0_BIT    = 0x01;
 
 const uint MILLIS_INC = 1;
 const char FRACT_INC = 3;      // (1024 % 1000) >> 3
@@ -59,20 +56,51 @@ fn uint millis_impl() {
     return m;
 }
 
+fn void micros_raw_asm() @naked @export("arduino_micros_raw") {
+    // Return ((overflow_count << 8) + TCNT0) * 4 in the AVR ABI's
+    // r22:r25 return registers. Keeping the atomic snapshot and byte shuffle
+    // in assembly avoids unstable 32-bit AVR code generation at -O0.
+    asm("in r19, 0x3f");
+    asm("cli");
+    asm("lds r22, arduino.time.timer0_overflow_count");
+    asm("lds r23, arduino.time.timer0_overflow_count+1");
+    asm("lds r24, arduino.time.timer0_overflow_count+2");
+    asm("lds r25, arduino.time.timer0_overflow_count+3");
+    asm("in r18, 0x26");
+    asm("in r20, 0x15");
+    asm("sbrs r20, 0");
+    asm("rjmp 1f");
+    asm("cpi r18, 0xff");
+    asm("breq 1f");
+    asm("subi r22, 0xff");
+    asm("sbci r23, 0xff");
+    asm("sbci r24, 0xff");
+    asm("sbci r25, 0xff");
+    asm("1:");
+    asm("out 0x3f, r19");
+    asm("mov r21, r24");
+    asm("mov r20, r23");
+    asm("mov r19, r22");
+    asm("mov r22, r18");
+    asm("mov r23, r19");
+    asm("mov r24, r20");
+    asm("mov r25, r21");
+    asm("lsl r22");
+    asm("rol r23");
+    asm("rol r24");
+    asm("rol r25");
+    asm("lsl r22");
+    asm("rol r23");
+    asm("rol r24");
+    asm("rol r25");
+    asm("ret");
+}
+
+extern fn uint micros_raw() @cname("arduino_micros_raw");
+
 fn uint micros_impl() {
     arduino_time_init();
-
-    char old_sreg = reg_read(SREG);
-    asm("cli");
-    uint m = @volatile_load(timer0_overflow_count);
-    char t = reg_read(TCNT0);
-    if ((reg_read(TIFR0) & TOV0_BIT) != 0 && t < 255) {
-        m++;
-    }
-    reg_write(SREG, old_sreg);
-
-    // 64 / clockCyclesPerMicrosecond() == 4 at 16 MHz.
-    return ((m << 8) + (uint)t) << 2;
+    return micros_raw();
 }
 
 fn void delay_ms_impl(uint ms) {
